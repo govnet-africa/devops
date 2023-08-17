@@ -1,0 +1,36 @@
+name: Java Tests
+env:
+  GOPRIVATE: "github.com/govnet-mofa/lib"
+on: 
+  workflow_call:
+    inputs:
+      java-version:
+        required: false
+        type: string
+        default: '17'
+      java-distribution:
+        required: false
+        type: string
+        default: 'temurin'
+      jre-cache:
+        required: false
+        type: string
+        default: 'maven'
+jobs:
+  go-test:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup JDK ${{ inputs.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: ${{ inputs.jre-cache }}
+    - name: Build with ${{ inputs.jre-cache }}
+      run: mvn -B package --file pom.xml
+    - name: Test with ${{ inputs.jre-cache }}
+      run: mvn test --file pom.xml
