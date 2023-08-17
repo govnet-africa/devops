@@ -1,6 +1,4 @@
 
-env:
-  COMMIT_SHA: $(git rev-parse --short ${{ github.sha }})
 on:
   workflow_call:
     inputs:
@@ -43,6 +41,8 @@ jobs:
         cache: ${{ inputs.jre-cache }}
     - name: Build with ${{ inputs.jre-cache }}
       run: mvn -B package --file pom.xml -DskipTests
+    - name: Set env
+      run: echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
     - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
@@ -63,7 +63,7 @@ jobs:
         COPY --from=build ${EXTRACTED}/snapshot-dependencies/ ./
         COPY --from=build ${EXTRACTED}/application/ ./
         ENV APP_PORT=${{ inputs.service-port }}
-        ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.COMMIT_SHA }}
+        ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
         ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
         EOF
