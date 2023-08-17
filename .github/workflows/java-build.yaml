@@ -61,6 +61,7 @@ jobs:
         FROM ${{env.DOCKER_BUILDER_IMG}} AS builder
         WORKDIR /workspace/app
         COPY target target
+        RUN ls target/extracted
         FROM ${{env.DOCKER_RUNNER_IMG}}
         VOLUME /tmp
         ARG EXTRACTED=/workspace/app/target/extracted
