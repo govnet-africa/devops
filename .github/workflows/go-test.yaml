@@ -1,0 +1,28 @@
+name: Go Tests
+env:
+  GOPRIVATE: "github.com/govnet-mofa/lib"
+on: 
+  workflow_call:
+    secrets: 
+      git-token:
+        required: true
+      git-user:
+        required: true
+jobs:
+  go-test:
+    runs-on: ${{ vars.DEV_JOB_RUNNER }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v4
+      with:
+        go-version: ${{ vars.GO_VERSION }}
+        cache: true
+    - name: Configure git for private modules
+      run: git config --global url."https://${{ secrets.git-user }}:${{ secrets.git-token }}@github.com".insteadOf "https://github.com"
+    - name: Download dependencies
+      run: go mod download
+    - name: Run tests
+      run: go test ./...

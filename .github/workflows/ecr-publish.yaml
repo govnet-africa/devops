@@ -1,0 +1,94 @@
+name: Publish Docker to ECR
+on: 
+   workflow_call:
+    inputs:
+      ecr-name:
+        required: true
+        type: string
+      artifact-key:
+        required: true
+        type: string
+      ecr-tag:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+      environment:
+        required: false
+        type: string
+        default: ${{ vars.DEFAULT_ENV }}
+      aws-region:
+        default: ${{ vars.DEV_AWS_REGION }}
+        type: string
+        required: false
+      dockercompose-cmd:
+        default: 'up -d'
+        type: string
+        required: false
+env:  
+  BACKUP_TAR: ${{inputs.ecr-name}}-docker.tar
+  LOCAL_REPO: hubpay/${{ inputs.ecr-name }}
+jobs:
+  docker_build:
+    runs-on: ${{ vars.DEV_JOB_RUNNER }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Restore build binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.artifact-key }}
+      - name: Set binary permissions
+        run: | 
+          if [ -f ${{ inputs.ecr-name }} ]; then
+            chmod +x ${{ inputs.ecr-name }}
+          fi
+      - name: Build image to ${{ env.LOCAL_REPO }} 
+        run: sed '$ d' Dockerfile && docker build -t ${{ env.LOCAL_REPO }}:latest .
+      - name: Package Image
+        run: docker image save -o ${{ env.BACKUP_TAR }} ${{ env.LOCAL_REPO }}:latest 
+      - name: Archive docker images
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.BACKUP_TAR }}
+          path: ${{ env.BACKUP_TAR }}
+  docker_push:
+    runs-on: ${{ vars.DEV_JOB_RUNNER }}
+    permissions:
+      id-token: write
+      contents: read
+    needs: docker_build
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key:  ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: ${{ vars.DEV_AWS_GHA_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC-${{ inputs.ecr-name }}
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Restore docker image from archive
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.BACKUP_TAR }}
+      - name: Tag ${{env.LOCAL_REPO }} Docker Image with ECR endpoint
+        env:
+          ECR_REPOSITORY: ${{ steps.ecr-login.outputs.registry }}/${{ inputs.ecr-name }}
+        run: |
+          docker load -i ${{ env.BACKUP_TAR }}
+          branch_ref=`echo ${{ github.ref_name }} | sed 's:.*/::'`
+          echo "branch_ref=$branch_ref" >> "$GITHUB_ENV"
+          docker tag ${{ env.LOCAL_REPO }}:latest ${{ env.ECR_REPOSITORY }}:${{ inputs.ecr-tag }} 
+          docker tag ${{ env.LOCAL_REPO }}:latest ${{ env.ECR_REPOSITORY }}:${{ inputs.environment }} 
+          docker tag ${{ env.LOCAL_REPO }}:latest ${{ env.ECR_REPOSITORY }}:$branch_ref
+          docker tag ${{ env.LOCAL_REPO }}:latest ${{ env.ECR_REPOSITORY }}:latest 
+      - name: Push Images to ECR
+        env:
+          ECR_REPOSITORY: ${{ steps.ecr-login.outputs.registry }}/${{ inputs.ecr-name }}
+        run: |
+          docker push ${{ env.ECR_REPOSITORY }}:latest 
+          docker push ${{ env.ECR_REPOSITORY }}:${{ inputs.ecr-tag }} 
+          docker push ${{ env.ECR_REPOSITORY }}:${{ inputs.environment }} 

@@ -1,0 +1,122 @@
+name: Deploy to docker host
+  
+on: 
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      service-dockercompose-image:
+        required: false
+        type: string
+        default: ${{ vars.DEV_DEPLOY_ECR_URI }}/${{ inputs.service }}:latest
+      service-dockercompose-name:
+        required: false
+        type: string
+        default: ${{inputs.service}}
+      environment:
+        required: true
+        type: string
+      tag:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+      install-cli:
+        required: false
+        type: boolean
+        default: false
+      aws-region:
+        default: ${{ vars.DEV_AWS_REGION }}
+        type: string
+        required: false
+      dockercompose-cmd:
+        default: 'up -d'
+        type: string
+        required: false
+jobs:
+  docker_deploy_dev:
+    runs-on: ${{ vars.DEV_JOB_RUNNER }}
+    if: ${{inputs.environment}} == ${{vars.DEFAULT_ENV}}
+    permissions: 
+      id-token: write
+      contents: read
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ inputs.aws-region }}
+      aws-cli: /usr/local/bin/aws 
+      aws-profile: github-actions 
+      aws-registry: ${{ vars.DEV_DEPLOY_ECR_URI }} 
+      aws-csv: file://${{ vars.SSH_DEPLOY_DIR }}/config/aws.csv
+    steps:
+      - name: Get Github action IP
+        id: github-ip
+        uses: haythem/public-ip@v1.3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key:  ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: ${{ vars.DEV_AWS_GHA_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC-${{ inputs.service }}
+      - name: Whitelist Github Actions Runner IP (EC2 Security Group)
+        id: github-ip-whitelisting
+        if: steps.github-ip.outcome == 'success'
+        run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-name ${{ vars.DEV_DEPLOY_EC2_AWS_SG_NAME }} \
+            --group-id ${{ vars.DEV_DEPLOY_EC2_AWS_SG_ID }} \
+            --protocol tcp --port 22 \
+            --cidr ${{ steps.github-ip.outputs.ipv4 }}/32
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: |
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+            QyNTUxOQAAACAbhVxJ2sgGN9jDMQCCxcQcpTt4zLRbr/RvVPzFaQ517wAAAKC9bZgsvW2Y
+            LAAAAAtzc2gtZWQyNTUxOQAAACAbhVxJ2sgGN9jDMQCCxcQcpTt4zLRbr/RvVPzFaQ517w
+            AAAEBMC/ETA7ZwI4T5JvXWCUPNefeau837mr1N95LIKVNhjBuFXEnayAY32MMxAILFxByl
+            O3jMtFuv9G9U/MVpDnXvAAAAF2dpdGh1Yi5jaUBzYXN1bGFodWIuZGV2AQIDBAUG
+            -----END OPENSSH PRIVATE KEY-----
+          name: id_ed25519
+          known_hosts: |
+            3.11.212.39 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF3ec9BeLnh/Uz/v1aKD5CG/Er5H5F2gHsRLXoj7quDPluNDkiWh81+U2mvomM1vWF0tDYy+YLqafOGCw/BkEwS94M3q27i4UJ7b/Cogy9e7ra7TE+5zJEszPlc3vFT5Sj1UbhwterPA78K/CmLbz8bwrFtrUWPWV4yEUp+IzXvFPCcmHcds3omiPdzznaeUsEcs7L8XXL4dIo04ERTWxIUZYfFAnoaXs3A+dhDopVCU50qHZsArdIufOKdvwlrPsAwiZUx7Ei+pB18wd1gZhrxqKoWMSlrBZcpwOg8GD81CEJlp3nexRkHjleb2XnNeU3M3Mgvpi+pIiXs5aqTFZP
+            3.11.212.39 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIIxHD135S6C+SqDpToSXSFeRRaHl9jpWqc8DdMe65gMKIlIYue2tfwNP34tI+/D5kMTpAsxV+dQMX7UyqC6Eg0=
+            3.11.212.39 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL/QuTnjptiUcxdxIgyUVpdi0WINC7ey0karGg1zvQ0S
+      - name: Install/Update aws cli
+        if: ${{inputs.install-cli}}
+        run: |
+          ssh ${{ vars.SSH_DEPLOY_USER }}@${{ vars.DEPLOY_HOST }} \
+          "curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip' && \
+          unzip awscliv2.zip && \
+          sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update && \
+          ${{env.aws-cli}} && rm -rf awscliv2.zip ./aws
+          "
+      - name: Remote docker login
+        run: |
+          ssh ${{ vars.SSH_DEPLOY_USER }}@${{ vars.DEPLOY_HOST }} \
+          "${{env.aws-cli}} configure import --csv ${{env.aws-csv}} && \
+           ${{env.aws-cli}} --profile ${{env.aws-profile}} configure list && \
+           ${{env.aws-cli}} --profile ${{env.aws-profile}} ecr get-login-password --region ${{env.AWS_DEFAULT_REGION}} | \
+             docker login --username AWS --password-stdin ${{env.aws-registry}}"
+      - name: Preparing new ${{inputs.service}} docker images
+        run: |
+          ssh ${{ vars.SSH_DEPLOY_USER }}@${{ vars.DEPLOY_HOST }} \
+          "docker pull ${{env.aws-registry}}/${{ inputs.service }}:${{inputs.tag}} && \
+              docker tag ${{env.aws-registry}}/${{ inputs.service }}:${{inputs.tag}} ${{inputs.service-dockercompose-image}}"
+      - name: Deploy with docker-compose
+        run: |
+          ssh ${{ vars.SSH_DEPLOY_USER }}@${{ vars.DEPLOY_HOST }} \
+          "docker-compose --project-directory ${{ vars.SSH_DEPLOY_DIR }} ${{ inputs.dockercompose-cmd }} ${{ inputs.service-dockercompose-name }}; \
+            docker images --filter 'dangling=true' -q --no-trunc | xargs -r docker rmi > /dev/null"
+      - name: Remove Github Actions Runner IP whitelisting (EC2 Security Group)
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-name ${{ vars.DEV_DEPLOY_EC2_AWS_SG_NAME }} \
+            --group-id ${{ vars.DEV_DEPLOY_EC2_AWS_SG_ID }} \
+            --protocol tcp --port 22 \
+            --cidr ${{ steps.github-ip.outputs.ipv4 }}/32

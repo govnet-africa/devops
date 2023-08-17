@@ -1,0 +1,75 @@
+
+env:
+  GOPRIVATE: "github.com/govnet-mofa/lib"
+  ARTIFACT_DIR: .out/bin/${{ inputs.environment }}
+  DOCKER_FILE: .out/bin/${{ inputs.environment }}/Dockerfile
+  OUTPUT_FILE: .out/bin/${{ inputs.environment }}/${{ inputs.service }}
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      artifact-key:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+        default: ${{ vars.DEFAULT_ENV }}
+      service:
+        required: true
+        type: string
+      service-port:
+        required: false
+        type: number
+        default: 80
+    secrets:
+      git-token:
+        required: true
+      git-user:
+        required: true
+jobs:
+  go_build:
+    runs-on: ${{ vars.DEV_JOB_RUNNER }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    - name: Configure git for private libs
+      run: git config --global url."https://${{secrets.git-user}}:${{secrets.git-token}}@github.com".insteadOf "https://github.com"
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v4
+      with:
+        go-version: ${{ vars.GO_VERSION }}
+        cache: true
+    - name: Prepare ${{ inputs.service }} artifact outputs
+      run: mkdir -p ${{ env.ARTIFACT_DIR }}
+    - name: Download ${{ inputs.service }} dependencies
+      run: go mod download
+    - name: Write dockerfile
+      run: |
+        cat <<EOF > ${{ env.DOCKER_FILE }} 
+        FROM alpine as builder
+        RUN apk add --no-cache ca-certificates tzdata
+        FROM scratch
+        WORKDIR /
+        COPY ${{ inputs.service }} .
+        COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+        COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+        ENV APP_HTTP_PORT=${{ inputs.service-port }}
+        ENV VERSION=${{ inputs.version }}
+        EXPOSE ${{ inputs.service-port }}
+        CMD ["/${{ inputs.service }}"]
+        EOF
+    - name: Build ${{ inputs.service }} 
+      run: |
+        CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
+          go build -ldflags "-s -w -X main.Release=${{ inputs.version }} -X main.SHA=${{ github.sha }}" -o ${{ env.OUTPUT_FILE }}
+        sed '$ d' Dockerfile
+    - name: Archive build binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.artifact-key }}
+        path: ${{ env.ARTIFACT_DIR }}
+        retention-days: 5

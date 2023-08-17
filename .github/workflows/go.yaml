@@ -1,0 +1,77 @@
+name: Go Deploy
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      service-port:
+        required: false
+        type: number
+        default: 80
+      service-dockercompose-image:
+        required: false
+        type: string
+        default: ${{ vars.DEV_DEPLOY_ECR_URI }}/${{ inputs.service }}:${{ inputs.version }}
+      service-dockercompose-name:
+        required: false
+        type: string
+        default: ${{inputs.service}}
+      version:
+        required: false
+        type: string
+        default: v-${{ github.sha }}
+      environment:
+        required: false
+        type: string
+        default: ${{ vars.DEFAULT_ENV }}
+      dockercompose-cmd:
+        required: false
+        type: string
+        default: 'up -d'
+    secrets:
+      git-token:
+        required: true
+      git-user:
+        required: true
+jobs:
+  build:
+    uses: govnet-mofa/main/.github/workflows/go-build.yaml@main
+    with:
+      service: ${{ inputs.service }}
+      environment: ${{ inputs.environment }}
+      artifact-key: ${{ inputs.service }}-${{ inputs.environment }}-build
+      version: ${{ inputs.version }}
+      service-port: ${{ inputs.service-port }}
+    secrets:
+      git-user: ${{ secrets.git-user }}
+      git-token: ${{ secrets.git-token }}
+    permissions:
+      id-token: write
+      contents: read
+  publish:
+    needs: build
+    uses: govnet-mofa/main/.github/workflows/ecr-publish.yaml@main
+    with:
+      ecr-name: ${{ inputs.service }}
+      environment: ${{ inputs.environment }}
+      artifact-key:  ${{ inputs.service }}-${{ inputs.environment }}-build
+      ecr-tag: ${{ inputs.version }}
+    permissions:
+      id-token: write
+      contents: read
+  deploy:
+    needs: publish
+    uses: govnet-mofa/main/.github/workflows/docker-deploy.yaml@main
+    with:
+      service: ${{ inputs.service }}
+      service-dockercompose-image: ${{ inputs.service-dockercompose-image }}
+      service-dockercompose-name: ${{ inputs.service-dockercompose-name }}
+      dockercompose-cmd: ${{ inputs.dockercompose-cmd }}
+      tag: ${{ inputs.version }}
+      environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    
