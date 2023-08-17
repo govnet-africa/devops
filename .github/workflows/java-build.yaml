@@ -58,7 +58,7 @@ jobs:
         COPY .mvn .mvn
         COPY pom.xml .
         COPY src src
-        RUN ./mvnw install -DskipTests
+        COPY target target
         RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
         RUN mkdir -p target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
         FROM ${{env.DOCKER_RUNNER_IMG}}
