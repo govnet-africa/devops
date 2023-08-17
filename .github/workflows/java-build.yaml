@@ -47,7 +47,7 @@ jobs:
     - name: Set env
       run: |
         echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
-        echo "GITHUB_BRANCH_SHORT=`echo ${{ github.ref }} | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
+        echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
     - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
@@ -73,7 +73,7 @@ jobs:
         ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
         EOF
     - name: Login to Docker Hub
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKERHUB_USER }}
         password: ${{ secrets.DOCKERHUB_PASS }}
