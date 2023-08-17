@@ -1,6 +1,6 @@
 name: Go Tests
 env:
-  GOPRIVATE: "github.com/govnet-mofa/lib"
+  GOPRIVATE: "github.com/govnet-mofa"
 on: 
   workflow_call:
     secrets: 
