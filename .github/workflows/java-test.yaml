@@ -17,7 +17,7 @@ on:
         type: string
         default: 'maven'
 jobs:
-  go-test:
+  java-test:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
