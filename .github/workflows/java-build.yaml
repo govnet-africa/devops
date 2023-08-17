@@ -2,6 +2,7 @@ env:
   DOCKER_BUILDER_IMG: eclipse-temurin:17-jdk-alpine
   DOCKER_RUNNER_IMG: paketobuildpacks/graalvm:latest
   DOCKERHUB_REPO: govnetservices/${{github.repository}}
+  DOCKER_BUILDKIT: 1
 on:
   workflow_call:
     inputs:
