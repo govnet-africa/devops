@@ -1,5 +1,5 @@
 env:
-  DOCKER_BUILDER_IMG: eclipse-temurin:17-jdk-alpine
+  DOCKER_BUILDER_IMG: alpine:latest
   DOCKER_RUNNER_IMG: paketobuildpacks/graalvm:latest
   DOCKERHUB_REPO: govnetservices/${{github.repository}}
   DOCKER_BUILDKIT: 1
@@ -36,6 +36,11 @@ jobs:
       id-token: write
       contents: read
     steps:
+    - name: Set env
+      run: |
+        echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
+        echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
+        echo "DOCKERHUB_REPO=govnetservices/$(echo ${{ github.repository }} | cut -d '/' -f 2)" >> $GITHUB_ENV
     - uses: actions/checkout@v3
     - name: Setup JDK ${{ inputs.java-version }}
       uses: actions/setup-java@v3
@@ -45,30 +50,23 @@ jobs:
         cache: ${{ inputs.jre-cache }}
     - name: Build with ${{ inputs.jre-cache }}
       run: mvn -B package --file pom.xml -DskipTests
-    - name: Set env
+    - name: Extract static jar assets
       run: |
-        echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
-        echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
-        echo "DOCKERHUB_REPO=govnetservices/$(echo ${{ github.repository }} | cut -d '/' -f 2)" >> $GITHUB_ENV
+        mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar);
+        mkdir -p target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted;
     - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
-        FROM ${{env.DOCKER_BUILDER_IMG}} AS build
+        FROM ${{env.DOCKER_BUILDER_IMG}} AS builder
         WORKDIR /workspace/app
-        COPY mvnw .
-        COPY .mvn .mvn
-        COPY pom.xml .
-        COPY src src
         COPY target target
-        RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
-        RUN mkdir -p target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
         FROM ${{env.DOCKER_RUNNER_IMG}}
         VOLUME /tmp
         ARG EXTRACTED=/workspace/app/target/extracted
-        COPY --from=build ${EXTRACTED}/dependencies/ ./
-        COPY --from=build ${EXTRACTED}/spring-boot-loader/ ./
-        COPY --from=build ${EXTRACTED}/snapshot-dependencies/ ./
-        COPY --from=build ${EXTRACTED}/application/ ./
+        COPY --from=builder ${EXTRACTED}/dependencies/ ./
+        COPY --from=builder ${EXTRACTED}/spring-boot-loader/ ./
+        COPY --from=builder ${EXTRACTED}/snapshot-dependencies/ ./
+        COPY --from=builder ${EXTRACTED}/application/ ./
         ENV APP_PORT=${{ inputs.service-port }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
