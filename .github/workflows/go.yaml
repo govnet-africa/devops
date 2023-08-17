@@ -63,7 +63,7 @@ jobs:
       contents: read
   deploy:
     needs: publish
-    uses: govnet-mofa/main/.github/workflows/docker-deploy.yaml@main
+    uses: govnet-mofa/main/.github/workflows/ec2-docker-deploy.yaml@main
     with:
       service: ${{ inputs.service }}
       service-dockercompose-image: ${{ inputs.service-dockercompose-image }}
