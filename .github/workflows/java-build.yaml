@@ -54,6 +54,7 @@ jobs:
       run: |
         mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar);
         mkdir -p target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted;
+        ls target/extracted
     - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
