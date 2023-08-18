@@ -64,15 +64,14 @@ jobs:
       run: |
         cat <<EOF > Dockerfile 
         FROM ${{env.DOCKER_BUILDER_IMG}} AS builder
-        WORKDIR /workspace/app
+        WORKDIR /app
         COPY target target
         FROM ${{env.DOCKER_RUNNER_IMG}}
         VOLUME /tmp
-        ARG EXTRACTED=/workspace/app/target/extracted
-        COPY --from=builder ${EXTRACTED}/dependencies/ ./
-        COPY --from=builder ${EXTRACTED}/spring-boot-loader/ ./
-        COPY --from=builder ${EXTRACTED}/snapshot-dependencies/ ./
-        COPY --from=builder ${EXTRACTED}/application/ ./
+        COPY --from=builder /app/target/extracted/dependencies/ ./
+        COPY --from=builder /app/target/extracted/spring-boot-loader/ ./
+        COPY --from=builder /app/target/extracted/snapshot-dependencies/ ./
+        COPY --from=builder /app/target/extracted/application/ ./
         ENV APP_PORT=${{ inputs.service-port }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
