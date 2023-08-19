@@ -83,13 +83,13 @@ jobs:
         COPY --from=builder /app/target/extracted/spring-boot-loader/ ./
         COPY --from=builder /app/target/extracted/snapshot-dependencies/ ./
         COPY --from=builder /app/target/extracted/application/ ./
-        COPY --from=builder /opt/jre-minimal /opt/jre-minimal
-        ENV JAVA_HOME=/opt/jre-minimal
+        COPY --from=builder /opt/jre-minimal /opt/jre0
+        ENV JAVA_HOME=/opt/jre0
         ENV PATH="$PATH:$JAVA_HOME/bin"
         ENV APP_PORT=${{ inputs.service-port }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
-        ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
+        ENTRYPOINT ["/opt/jre0/bin/java", "org.springframework.boot.loader.JarLauncher"]
         EOF
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
