@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+
+  pgdb:
+    image: postgres:14.5
+    container_name: ${PROJECT}-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdb:/var/lib/postgresql/data
+      - ${CODE_ROOT}/ifas-migrations/init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    env_file:
+      - ./psql/.env
+    networks:
+      mofa-dev:
+
+  api:
+    ports:
+      - "42082:80"
+    build:
+      args:
+        GIT_USER: "user"
+        GIT_PASS: "ghp_PAT_PAT_PAT_PAT_PAT_PAT_PAT"
+        GO_DEV_PROXY: "http://gomod.cache.local"
+
+  public-ui:
+    ports:
+      - "42080:80"
+    build:
+      args:
+        NPM_DEV_PROXY: http://npm.cache.local/
+        REGISTRATION_URL: https://api.new.${PROJECT}.local/auth/registration
+        API_BASE_URL: https://api.${PROJECT}.local
+        AUTH_BASE_URL: https://auth.${PROJECT}.local
+        AUTH_CLIENT: CLIENT_ID_OF_AUTH
+        AUTH_REDIRECT_URI: https://${PROJECT}.local/login
+
+  admin-ui:
+    ports:
+      - "42081:80"
+    build:
+      args:
+        NPM_DEV_PROXY: http://npm.cache.local/
+        REGISTRATION_URL: https://api.new.${PROJECT}.local/auth/registration
+        API_BASE_URL: https://api.${PROJECT}.local
+        AUTH_BASE_URL: https://auth.${PROJECT}.local
+        AUTH_CLIENT: CLIENT_ID_OF_AUTH
+        AUTH_REDIRECT_URI: https://${PROJECT}.local/login
+
+networks:
+  mofa-dev:
+    external: true
+
+volumes:
+  pgdb:

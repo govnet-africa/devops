@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  
+  db-migrator:
+    image: ${ORG_URI}/${PROJECT}/db-migrator:dev
+    container_name: ${PROJECT}-db-migrator
+    build:
+      context: $CODE_ROOT/migrations
+      dockerfile: Dockerfile
+    networks:
+      mofa-dev:
+    env_file:
+      - ./config/pgdb.env
+
+  core-api:
+    restart: unless-stopped
+    container_name: ${PROJECT}-core-api
+    image: govnetservices/ifas-core-api:latest
+    networks:
+      mofa-dev:
+    env_file:
+      - ./config/.env
+      - ./config/pgdb.env
+      - ./config/core-api.env
+
+  bilateral-operations:
+    restart: unless-stopped
+    container_name: ${PROJECT}-bilateral-operations-api
+    image: govnetservices/ifas-be-service-bilateraloperations:latest
+    networks:
+      mofa-dev:
+    env_file:
+      - ./config/.env
+      - ./config/pgdb.env
+      - ./config/bilateral-operations.env
+
+networks:
+  mofa-dev:
