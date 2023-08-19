@@ -91,12 +91,13 @@ jobs:
         EXPOSE ${{ inputs.service-port }}
         ENTRYPOINT ["/opt/jre0/bin/java", "org.springframework.boot.loader.JarLauncher"]
         EOF
-    - name: Build and push Docker image
+    - name: Build and push docker image
       uses: docker/build-push-action@v4
       with:
         context: .
         push: true
         tags: |
+          ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
           ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:${{ inputs.version || env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:latest

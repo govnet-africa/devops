@@ -3,101 +3,48 @@ name: Java Deploy
 on:
   workflow_call:
     inputs:
+      version:
+        required: false
+        type: string
+        default: null
+      java-version:
+        required: false
+        type: string
+        default: '17'
+      java-distribution:
+        required: false
+        type: string
+        default: 'temurin'
+      jre-cache:
+        required: false
+        type: string
+        default: 'maven'
       service:
         required: true
         type: string
       service-port:
         required: false
         type: number
-        default: 80
-      service-dockercompose-image:
-        required: false
-        type: string
-        default: ${{ vars.DEV_DEPLOY_ECR_URI }}/${{ inputs.service }}:${{ inputs.version }}
-      service-dockercompose-name:
-        required: false
-        type: string
-        default: ${{inputs.service}}
-      dockercompose-cmd:
-        required: false
-        type: string
-        default: 'up -d'
-      version:
-        required: false
-        type: string
-        default: v-${{ github.sha }}
-      node-version:
-        required: true
-        type: string
-      environment:
-        required: false
-        type: string
-        default: ${{ vars.DEFAULT_ENV }}
-      registration-url:
-        required: true
-        type: string
-      api_base-url:
-        required: true
-        type: string
-      auth-base-url:
-        required: true
-        type: string
-      auth-client-id:
-        required: true
-        type: string
-      auth-client-secret:
-        required: false
-        type: string
-        default: ''
-      auth-redirect-url:
-        required: true
-        type: string
-    secrets:
-      git-token:
-        required: true
-      git-user:
-        required: true
+        default: 8080
 jobs:
   build:
-    uses: govnet-mofa/main/.github/workflows/vue-build-static.yaml@main
+    uses: govnet-mofa/main/.github/workflows/java-build.yaml@devops
     with:
       service: ${{ inputs.service }}
-      environment: ${{ inputs.environment }}
-      artifact-key: ${{ inputs.service }}-${{ inputs.environment }}-build
       service-port: ${{ inputs.service-port }}
-      node-version: ${{ inputs.node-version }}
-      registration-url: ${{ inputs.registration-url }}
-      api_base-url: ${{ inputs.api_base-url }}
-      auth-base-url: ${{ inputs.auth-base-url }}
-      auth-client-id: ${{ inputs.auth-client-id }}
-      auth-redirect-url: ${{ inputs.auth-redirect-url }}
-    secrets:
-      git-user: ${{ secrets.git-user }}
-      git-token: ${{ secrets.git-token }}
-    permissions:
-      id-token: write
-      contents: read
-  publish:
-    needs: build
-    uses: govnet-mofa/main/.github/workflows/ecr-publish.yaml@main
-    with:
-      ecr-name: ${{ inputs.service }}
-      environment: ${{ inputs.environment }}
-      artifact-key:  ${{ inputs.service }}-${{ inputs.environment }}-build
-      ecr-tag: ${{ inputs.version }}
+      version:  ${{inputs.version }}
+      java-version: ${{ inputs.java-version }}
+      java-distribution: ${{ inputs.java-distribution }}
+      jre-cache: ${{ inputs.jre-cache }}
     permissions:
       id-token: write
       contents: read
   deploy:
-    needs: publish
-    uses: govnet-mofa/main/.github/workflows/ec2-docker-deploy.yaml@main
+    needs: build
+    uses: govnet-mofa/main/.github/workflows/vcs-docker-deploy.yaml@devops
     with:
       service: ${{ inputs.service }}
-      service-dockercompose-image: ${{ inputs.service-dockercompose-image }}
-      service-dockercompose-name: ${{ inputs.service-dockercompose-name }}
-      dockercompose-cmd: ${{ inputs.dockercompose-cmd }}
-      tag: ${{ inputs.version }}
-      environment: ${{ inputs.environment }}
+      tag: ${{ inputs.version || github.sha }}
     permissions:
       id-token: write
       contents: read

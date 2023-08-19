@@ -1,0 +1,30 @@
+name: Deploy to docker host
+  
+on: 
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      tag:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+jobs:
+  docker_deploy_dev:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: read
+    steps:
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{vars.DEPLOY_HOST_PRIVATE_KEY }}
+          name: id_ed25519
+          known_hosts: ${{vars.DEPLOY_HOST_FINGERPRINT}}
+      - name: Deploy ${{ inputs.service }}
+        env:
+          SSH_USER_HOST: ${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}
+        run: ssh ${{env.SSH_USER_HOST}} "make -C  ${{ vars.DOCKERCOMPOSE_DIR }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
