@@ -1,6 +1,6 @@
 env:
-  DOCKER_BUILDER_IMG: alpine:latest
-  DOCKER_RUNNER_IMG: paketobuildpacks/graalvm:latest
+  DOCKER_BUILDER_IMG: openjdk:17-oraclelinux8
+  DOCKER_RUNNER_IMG: bitnami/minideb:latest
   DOCKERHUB_REPO: govnetservices/${{github.repository}}
   DOCKER_BUILDKIT: 1
 on:
@@ -63,7 +63,18 @@ jobs:
     - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
-        FROM ${{env.DOCKER_BUILDER_IMG}} AS builder
+        FROM openjdk:17-oraclelinux8 as builder
+        USER root
+        RUN jlink \
+          --module-path "$JAVA_HOME/jmods" \
+          --add-modules java.compiler,java.sql,java.naming,java.management,java.instrument,java.rmi,java.desktop,jdk.internal.vm.compiler.management,java.xml.crypto,java.scripting,java.security.jgss,jdk.httpserver,java.net.http,jdk.naming.dns,jdk.crypto.cryptoki,jdk.unsupported \
+          --verbose \
+          --strip-debug \
+          --compress 2 \
+          --no-header-files \
+          --no-man-pages \
+          --output /opt/jre-minimal
+        USER app
         WORKDIR /app
         COPY target target
         FROM ${{env.DOCKER_RUNNER_IMG}}
@@ -72,6 +83,9 @@ jobs:
         COPY --from=builder /app/target/extracted/spring-boot-loader/ ./
         COPY --from=builder /app/target/extracted/snapshot-dependencies/ ./
         COPY --from=builder /app/target/extracted/application/ ./
+        COPY --from=builder /opt/jre-minimal /opt/jre-minimal
+        ENV JAVA_HOME=/opt/jre-minimal
+        ENV PATH="$PATH:$JAVA_HOME/bin"
         ENV APP_PORT=${{ inputs.service-port }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
@@ -83,7 +97,6 @@ jobs:
         context: .
         push: true
         tags: |
-          ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
           ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:${{ inputs.version || env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:latest
