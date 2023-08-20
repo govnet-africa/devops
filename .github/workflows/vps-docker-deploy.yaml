@@ -12,19 +12,24 @@ on:
         type: string
         default: ${{ github.sha }}
 jobs:
-  docker_deploy_dev:
+  docker_deploy:
     runs-on: ubuntu-latest
     permissions: 
       id-token: write
       contents: read
     steps:
-      - name: Install SSH Key
+      - name: Configure Host SSH
         uses: shimataro/ssh-key-action@v2
         with:
-          key: ${{vars.DEPLOY_HOST_PRIVATE_KEY }}
-          name: id_ed25519
-          known_hosts: ${{vars.DEPLOY_HOST_FINGERPRINT}}
+          key: ${{ secrets.DEPLOY_HOST_PRIVATE_KEY }}
+          name: ifas_dev
+          known_hosts: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          config: |
+            Host github.com
+              HostName github.com
+              User ${{ secrets.DEPLOY_USER }}
+              IdentityFile ~/.ssh/ifas_dev
       - name: Deploy ${{ inputs.service }}
         env:
-          SSH_USER_HOST: ${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}
-        run: ssh ${{env.SSH_USER_HOST}} "make -C  ${{ vars.DOCKERCOMPOSE_DIR }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
+          SSH_USER_HOST: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+        run: ssh ${{ secrets.DEPLOY_HOST }} "make -C  ${{ secrets.DOCKERCOMPOSE_DIR }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
