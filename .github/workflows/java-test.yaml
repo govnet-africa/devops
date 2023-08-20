@@ -16,6 +16,14 @@ on:
         required: false
         type: string
         default: 'maven'
+      mvn-user:
+        required: false
+        type: string
+        default: 'ronaldkasagga'
+      mvn-token:
+        required: false
+        type: string
+        default: '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'
 jobs:
   java-test:
     runs-on: ubuntu-latest
@@ -30,6 +38,8 @@ jobs:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
         cache: ${{ inputs.jre-cache }}
+        server-username: ${{ inputs.mvn-user }}
+        server-password: ${{ inputs.mvn-token }}
     - name: Build with ${{ inputs.jre-cache }}
       run: mvn -B package --file pom.xml
     - name: Test with ${{ inputs.jre-cache }}

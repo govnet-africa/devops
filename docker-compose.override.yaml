@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+
+  api:
+    ports:
+      - "42082:80"
+    build:
+      args:
+        GIT_USER: "ronaldkasagga"
+        GIT_PASS: "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"
+        GO_DEV_PROXY: "http://go.cache.local"
+
+  public-ui:
+    ports:
+      - "42080:80"
+    build:
+      args:
+        NPM_DEV_PROXY: http://npm.cache.local/
+        REGISTRATION_URL: https://api.new.${PROJECT}.local/auth/registration
+        API_BASE_URL: https://api.${PROJECT}.local
+        AUTH_BASE_URL: https://auth.${PROJECT}.local
+        AUTH_CLIENT: 6duobig5fkh508sc8t1n4avu1m
+        AUTH_REDIRECT_URI: https://${PROJECT}.local/login
+
+  admin-ui:
+    ports:
+      - "42081:80"
+    build:
+      args:
+        NPM_DEV_PROXY: http://npm.cache.local/
+        REGISTRATION_URL: https://api.new.${PROJECT}.local/auth/registration
+        API_BASE_URL: https://api.${PROJECT}.local
+        AUTH_BASE_URL: https://auth.${PROJECT}.local
+        AUTH_CLIENT: 6duobig5fkh508sc8t1n4avu1m
+        AUTH_REDIRECT_URI: https://${PROJECT}.local/login

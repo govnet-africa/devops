@@ -26,6 +26,12 @@ on:
         required: false
         type: number
         default: 8080
+      mvn-user:
+        required: false
+        type: string
+      mvn-token:
+        required: false
+        type: string
 jobs:
   build:
     uses: govnet-mofa/ifas-devops/.github/workflows/java-build.yaml@devops
@@ -36,6 +42,8 @@ jobs:
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       jre-cache: ${{ inputs.jre-cache }}
+      mvn-user: ${{ inputs.mvn-user }}
+      mvn-token: ${{ inputs.mvn-token }}
     permissions:
       id-token: write
       contents: read
