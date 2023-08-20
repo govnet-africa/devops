@@ -11,6 +11,22 @@ on:
         required: false
         type: string
         default: ${{ github.sha }}
+      deploy-host:
+        required: false
+        type: string
+        default: "${{ inputs.service }}.ifas.mofa"
+      deploy-host-ip:
+        required: false
+        type: string
+        default: '109.74.200.222'
+      deploy-user:
+        required: false
+        type: string
+        default: 'github-actions'
+      deploy-dir:
+        required: false
+        type: string
+        default: '/deploy/mofa-ifas'
 jobs:
   docker_deploy:
     runs-on: ubuntu-latest
@@ -18,22 +34,26 @@ jobs:
       id-token: write
       contents: read
     steps:
+      - name: Prep shared variables
+        run: |
+          echo "DEPLOY_HOST_KEYSCAN=`ssh-keyscan ${{ inputs.deploy-host-ip }}`" >> $GITHUB_ENV
       - name: Configure Host SSH
         uses: shimataro/ssh-key-action@v2
-        env: 
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          HOST_FINGERPRINT: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
-          HOST_KEY: ${{ secrets.DEPLOY_HOST_PRIVATE_KEY }}
         with:
-          key: ${{ env.HOST_KEY }}
-          name: ifas_dev
-          known_hosts: ${{ env.HOST_FINGERPRINT }}
+          name: ifas_github
+          known_hosts: ${{ env.DEPLOY_HOST_KEYSCAN }}
           config: |
-            Host github.com
-              HostName github.com
-              User ${{ env.DEPLOY_USER }}
-              IdentityFile ~/.ssh/ifas_dev
-      - name: Deploy ${{ inputs.service }}
-        env:
-          SSH_USER_HOST: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
-        run: ssh ${{ secrets.DEPLOY_HOST }} "make -C  ${{ secrets.DOCKERCOMPOSE_DIR }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
+            Host ${{ inputs.deploy-host }}
+              HostName ${{ inputs.deploy-host-ip }}
+              User ${{ inputs.deploy-user }}
+              IdentityFile ~/.ssh/ifas_github
+          key: |
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+            QyNTUxOQAAACCxhDsc4Jetw6+ZRU3e8kTBAOUcDJD0C0wgLkFrQ+m3sAAAAJgVMHDkFTBw
+            5AAAAAtzc2gtZWQyNTUxOQAAACCxhDsc4Jetw6+ZRU3e8kTBAOUcDJD0C0wgLkFrQ+m3sA
+            AAAEC1X81ZVM+fkLipdlmaz5JO7PX8NEqDt+xFQLPG11aH3LGEOxzgl63Dr5lFTd7yRMEA
+            5RwMkPQLTCAuQWtD6bewAAAAFWdpdGh1YkBtb2ZhLmdvdm5ldC51Zw==
+            -----END OPENSSH PRIVATE KEY-----
+      - name: Deploy ${{ inputs.service }} with docker
+        run: ssh ${{ inputs.deploy-host }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
