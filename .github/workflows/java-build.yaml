@@ -1,7 +1,6 @@
 env:
-  DOCKER_BUILDER_IMG: openjdk:17-oraclelinux8
-  DOCKER_RUNNER_IMG: bitnami/minideb:latest
-  DOCKERHUB_REPO: govnetservices/${{github.repository}}
+  DOCKERFILE_BUILDER_IMG: openjdk:17-oraclelinux8
+  DOCKERHUB_REPO: ${{ inputs.dockerhub-org }}/${{ github.repository }}
   DOCKER_BUILDKIT: 1
 on:
   workflow_call:
@@ -29,6 +28,14 @@ on:
         required: false
         type: number
         default: 8080
+      dockerhub-org:
+        required: false
+        type: string
+        default: 'govnetservices'
+      dockerfile-runner-img:
+        required: false
+        type: string
+        default: 'bitnami/minideb:latest'
 jobs:
   java-build:
     runs-on: ubuntu-latest
@@ -41,7 +48,7 @@ jobs:
       run: |
         echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
         echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
-        echo "DOCKERHUB_REPO=govnetservices/$(echo ${{ github.repository }} | cut -d '/' -f 2)" >> $GITHUB_ENV
+        echo "DOCKERHUB_REPO=${{ inputs.dockerhub-org }}/$(echo ${{ github.repository }} | cut -d '/' -f 2)" >> $GITHUB_ENV
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
@@ -61,6 +68,8 @@ jobs:
         (cd target/dependency; jar -xf ../*.jar) && \
         java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted 
     - name: Write Dockerfile
+      env:
+        JRE_HOME: /opt/jre
       run: |
         cat <<EOF > Dockerfile 
         FROM openjdk:17-oraclelinux8 as builder
@@ -77,19 +86,20 @@ jobs:
         USER app
         WORKDIR /app
         COPY target target
-        FROM ${{env.DOCKER_RUNNER_IMG}}
+        FROM ${{ inputs.dockerfile-runner-img }}
         VOLUME /tmp
         COPY --from=builder /app/target/extracted/dependencies/ ./
         COPY --from=builder /app/target/extracted/spring-boot-loader/ ./
         COPY --from=builder /app/target/extracted/snapshot-dependencies/ ./
         COPY --from=builder /app/target/extracted/application/ ./
-        COPY --from=builder /opt/jre-minimal /opt/jre0
-        ENV JAVA_HOME=/opt/jre0
+        COPY --from=builder /opt/jre-minimal ${{ env.JRE_HOME }}
+        ENV JAVA_HOME=${{ env.JRE_HOME }}
         ENV PATH="$PATH:$JAVA_HOME/bin"
         ENV APP_PORT=${{ inputs.service-port }}
+        ENV GITHUB_COMMIT=${{ github.sha }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
-        ENTRYPOINT ["/opt/jre0/bin/java", "org.springframework.boot.loader.JarLauncher"]
+        ENTRYPOINT ["${{ env.JRE_HOME }}/bin/java", "org.springframework.boot.loader.JarLauncher"]
         EOF
     - name: Build and push docker image
       uses: docker/build-push-action@v4

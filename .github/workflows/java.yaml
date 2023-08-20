@@ -28,7 +28,7 @@ on:
         default: 8080
 jobs:
   build:
-    uses: govnet-mofa/main/.github/workflows/java-build.yaml@devops
+    uses: govnet-mofa/ifas-devops/.github/workflows/java-build.yaml@devops
     with:
       service: ${{ inputs.service }}
       service-port: ${{ inputs.service-port }}
@@ -41,7 +41,7 @@ jobs:
       contents: read
   deploy:
     needs: build
-    uses: govnet-mofa/main/.github/workflows/vcs-docker-deploy.yaml@devops
+    uses: govnet-mofa/ifas-devops/.github/workflows/vps-docker-deploy.yaml@devops
     with:
       service: ${{ inputs.service }}
       tag: ${{ inputs.version || github.sha }}
