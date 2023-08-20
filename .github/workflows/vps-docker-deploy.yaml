@@ -20,14 +20,18 @@ jobs:
     steps:
       - name: Configure Host SSH
         uses: shimataro/ssh-key-action@v2
+        env: 
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          HOST_FINGERPRINT: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          HOST_KEY: ${{ secrets.DEPLOY_HOST_PRIVATE_KEY }}
         with:
-          key: ${{ secrets.DEPLOY_HOST_PRIVATE_KEY }}
+          key: ${{ env.HOST_KEY }}
           name: ifas_dev
-          known_hosts: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          known_hosts: ${{ env.HOST_FINGERPRINT }}
           config: |
             Host github.com
               HostName github.com
-              User ${{ secrets.DEPLOY_USER }}
+              User ${{ env.DEPLOY_USER }}
               IdentityFile ~/.ssh/ifas_dev
       - name: Deploy ${{ inputs.service }}
         env:
