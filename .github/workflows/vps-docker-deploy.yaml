@@ -36,12 +36,15 @@ jobs:
     steps:
       - name: Prep shared variables
         run: |
-          echo "DEPLOY_HOST_KEYSCAN=`ssh-keyscan ${{ inputs.deploy-host-ip }}`" >> $GITHUB_ENV
+          host_keyscan_file=/tmp/ifas-deploy-host-keyscan-${{ github.sha }}
+          ssh-keyscan ${{ inputs.deploy-host-ip }} > $host_keyscan_file
+          echo "DEPLOY_HOST_KEYSCAN=`cat $host_keyscan_file`" >> $GITHUB_ENV
       - name: Configure Host SSH
         uses: shimataro/ssh-key-action@v2
         with:
           name: ifas_github
-          known_hosts: ${{ env.DEPLOY_HOST_KEYSCAN }}
+          known_hosts: |
+            ${{ env.DEPLOY_HOST_KEYSCAN }}
           config: |
             Host ${{ inputs.deploy-host }}
               HostName ${{ inputs.deploy-host-ip }}
