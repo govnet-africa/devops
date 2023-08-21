@@ -1,5 +1,5 @@
 env:
-  DOCKERFILE_BUILDER_IMG: openjdk:17-oraclelinux8
+  DOCKERFILE_BUILDER_IMG: pull eclipse-temurin:${{ inputs.java-version }}-jdk
   DOCKERHUB_REPO: ${{ inputs.dockerhub-org }}/${{ github.repository }}
   DOCKER_BUILDKIT: 1
 on:
@@ -43,7 +43,7 @@ on:
       dockerfile-runner-img:
         required: false
         type: string
-        default: 'bitnami/minideb:latest'
+        default: 'eclipse-temurin:${{ inputs.java-version }}-jre'
 jobs:
   java-build:
     runs-on: ubuntu-latest
@@ -119,7 +119,7 @@ jobs:
         JRE_HOME: /opt/jre
       run: |
         cat <<EOF > Dockerfile 
-        FROM openjdk:17-oraclelinux8 as builder
+        FROM ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
         USER root
         RUN jlink \
           --module-path "$JAVA_HOME/jmods" \
