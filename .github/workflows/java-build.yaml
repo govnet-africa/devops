@@ -148,20 +148,16 @@ jobs:
         EXPOSE ${{ inputs.service-port }}
         ENTRYPOINT ["${{ env.JRE_HOME }}/bin/java", "org.springframework.boot.loader.JarLauncher"]
         EOF
-    - name: Prepare docker tags
+    - name: Set docker branch tag
       run: |
-        tag_file="/tmp/docker-${{ github.sha }}-tags" && touch $tag_file
-        tags="${{ github.sha }} ${{ env.GITHUB_BRANCH_SHORT }} ${{ inputs.version || env.GITHUB_SHA_SHORT }} latest"
-        for tag in $tags; do
-          if [[ -n "$tag" ]]; then
-            echo "${{ env.DOCKERHUB_REPO }}:${tag}" >> $tag_file
-          fi
-        done
-        echo "DOCKERHUB_TAGS=`cat $tag_file`" >> $GITHUB_ENV
+        echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
     - name: Build and push docker image
       uses: docker/build-push-action@v4
       with:
         context: .
         push: true
         tags: |
-          ${{ env.DOCKERHUB_TAGS }}
+          ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
+          ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}
+          ${{ env.DOCKERHUB_REPO }}:${{ inputs.version || env.GITHUB_SHA_SHORT }}
+          ${{ env.DOCKERHUB_REPO }}:latest
