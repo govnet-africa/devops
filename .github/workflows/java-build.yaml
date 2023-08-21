@@ -1,5 +1,5 @@
 env:
-  DOCKERFILE_BUILDER_IMG: pull eclipse-temurin:${{ inputs.java-version }}-jdk
+  DOCKERFILE_BUILDER_IMG: eclipse-temurin:${{ inputs.java-version }}-jdk
   DOCKERHUB_REPO: ${{ inputs.dockerhub-org }}/${{ github.repository }}
   DOCKER_BUILDKIT: 1
 on:
