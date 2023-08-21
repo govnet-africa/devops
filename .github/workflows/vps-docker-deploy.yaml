@@ -34,17 +34,14 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Prep shared variables
-        run: |
-          host_keyscan_file=/tmp/ifas-deploy-host-keyscan-${{ github.sha }}
-          ssh-keyscan ${{ inputs.deploy-host-ip }} > $host_keyscan_file
-          echo "DEPLOY_HOST_KEYSCAN='`cat $host_keyscan_file`'" >> $GITHUB_ENV
       - name: Configure Host SSH
         uses: shimataro/ssh-key-action@v2
         with:
           name: ifas_github
           known_hosts: |
-            ${{ env.DEPLOY_HOST_KEYSCAN }}
+            109.74.200.222 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCqdb1Ttf3aoyxwpSCkVdvu8HKv+fjLNLYut2hfft5cEy7O6HOkUfdp+mLjuwuv7ipi89iBo3DQUGQoyWdqZ0YTbPvm9N6ZvhhydkEhTK6461Yz1SHO2CaZIbCDGQbtW6/bI3o3Q3/RnJ5zNPxQYznsqLAZHRqir/9E3PWIin+hg5zTRSMe1JxU2mrkMbe2LXu7ghIv7jmWZ1ZTN6qsNZBGjYi2SCvmkkA3ZJTI3rID1gfdHW/OToymc/bcMgQREvnZSqmZx/GmVUWrMjfeoAByeA6qM58cFuFKzv1EsBKz/V64pRIpqSpVjzE1Dr5//CEkJXeNME2ReJsWoWHc617lv9BZbO50k2LCFRdLF8n3ikRz3cqMNhfPOPBn4Ukgn7WquhhkX1lC7yfCzmCpbA/2TZbtB17yNw3VDzjU9YIMhqfOF6hhBkv8EUIYk1CZvp5ogMEpFIrUy+1VIxvQDyxdezZbg0ofLybx4yszpJiQBTMBhhHDsuRSUgaXg5XEN38=
+            109.74.200.222 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKI2X8Yg3tJrHQ/IU69ctRkaK7vYDM3qW8hSIdF1kpJW0txXn/lH6Q+6gA4k2PyfU9+300oBDUK7N3P2stXu/j4=
+            109.74.200.222 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC+FWVwbl6RR3d5hMjw7GOKgtraLqWeh9dWnXYhIJyuI
           config: |
             Host ${{ inputs.deploy-host }}
               HostName ${{ inputs.deploy-host-ip }}
