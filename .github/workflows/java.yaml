@@ -33,7 +33,7 @@ on:
       mvn-token:
         required: false
         type: string
-        default: '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'
+        default: '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'
 jobs:
   build:
     uses: govnet-mofa/ifas-devops/.github/workflows/java-build.yaml@devops
