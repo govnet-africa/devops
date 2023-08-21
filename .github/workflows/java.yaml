@@ -29,9 +29,11 @@ on:
       mvn-user:
         required: false
         type: string
+        default: 'ronaldkasagga'
       mvn-token:
         required: false
         type: string
+        default: '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'
 jobs:
   build:
     uses: govnet-mofa/ifas-devops/.github/workflows/java-build.yaml@devops
