@@ -158,6 +158,5 @@ jobs:
         push: true
         tags: |
           ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
-          ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:${{ inputs.version || env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:latest
