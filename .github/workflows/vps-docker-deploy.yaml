@@ -38,7 +38,7 @@ jobs:
         run: |
           host_keyscan_file=/tmp/ifas-deploy-host-keyscan-${{ github.sha }}
           ssh-keyscan ${{ inputs.deploy-host-ip }} > $host_keyscan_file
-          echo "DEPLOY_HOST_KEYSCAN=`cat $host_keyscan_file`" >> $GITHUB_ENV
+          echo "DEPLOY_HOST_KEYSCAN='`cat $host_keyscan_file`'" >> $GITHUB_ENV
       - name: Configure Host SSH
         uses: shimataro/ssh-key-action@v2
         with:
