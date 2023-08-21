@@ -146,7 +146,7 @@ jobs:
         ENV BUILD=${{ env.SERVICE_BUILD }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
-        ENTRYPOINT ["${{ env.JRE_HOME }}/bin/java", -Dspring.cloud.consul.host=${CONSUL_HOST}, -Dspring.cloud.consul.port=${CONSUL_PORT}, "org.springframework.boot.loader.JarLauncher"]
+        ENTRYPOINT ["${{ env.JRE_HOME }}/bin/java", "-Dspring.cloud.consul.host=${CONSUL_HOST}", "-Dspring.cloud.consul.port=${CONSUL_PORT}", "org.springframework.boot.loader.JarLauncher"]
         EOF
     - name: Set docker branch tag
       run: |
