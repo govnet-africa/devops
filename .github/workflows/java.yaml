@@ -34,6 +34,14 @@ on:
         required: false
         type: string
         default: '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'
+      consul-host:
+        required: false
+        type: string
+        default: 'consul'
+      consul-port:
+        required: false
+        type: number
+        default: 8500
 jobs:
   build:
     uses: govnet-mofa/ifas-devops/.github/workflows/java-build.yaml@devops
@@ -46,6 +54,8 @@ jobs:
       jre-cache: ${{ inputs.jre-cache }}
       mvn-user: ${{ inputs.mvn-user }}
       mvn-token: ${{ inputs.mvn-token }}
+      consul-host: ${{ inputs.consul-host }}
+      consul-port: ${{ inputs.consul-port }}
     permissions:
       id-token: write
       contents: read
