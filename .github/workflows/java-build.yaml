@@ -41,7 +41,7 @@ on:
       dockerfile-runner-img:
         required: false
         type: string
-        default: 'alpine:latest'
+        default: 'eclipse-temurin:${{ inputs.java-version }}-jre'
       consul-host:
         required: true
         type: string
