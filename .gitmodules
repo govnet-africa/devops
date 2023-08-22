@@ -1,0 +1,6 @@
+[submodule "docker"]
+	path = docker
+	url = git@github.com:govnet-mofa/ifas-docker.git
+[submodule "infrastructure"]
+	path = infrastructure
+	url = git@github.com:govnet-mofa/ifas-docker-infra.git
