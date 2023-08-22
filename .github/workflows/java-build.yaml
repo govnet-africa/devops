@@ -150,7 +150,7 @@ jobs:
         ENV BUILD=${{ env.SERVICE_BUILD }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
-        RUN root:x:0:0:root:/root:/bin/bash => root:x:0:0:root:/root:/sbin/nologin
+        RUN sed -i 's/\/bin\/ash/\/sbin\/nologin/g' /etc/passwd
         ENTRYPOINT ["${{ env.JRE_HOME }}/bin/java", "-Dspring.cloud.consul.host=${{ inputs.consul-host }}", "-Dspring.cloud.consul.port=${{ inputs.consul-port }}", "org.springframework.boot.loader.JarLauncher"]
         EOF
     - name: Set docker branch tag
