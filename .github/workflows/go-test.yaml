@@ -8,19 +8,15 @@ on:
         required: false
         type: string
         default: '1.21.0'
-      gomod_token:
-        required: false
-        type: string
-        default: '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'
       deploy-host-ip:
         required: false
         type: string
         default: '109.74.200.222'
     # secrets: 
-      git-token:
-        type: string
+      gomod-token:
         required: false
-        default: 'dckr_pat_TLq0t2oN4tqcYXtMXghD_sozOog'
+        type: string
+        default: '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'
       git-user:
         type: string
         required: false
@@ -35,22 +31,15 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-go@v4
       with:
-        token: ${{ inputs.gomod_token }}
+        token: ${{ secrets.gomod-token }}
         go-version: ${{ inputs.version }}
         cache: true
     - name: Configure Host SSH
-      uses: LuisEnMarroquin/setup-ssh-action@v2.0.0
+      uses: extractions/netrc@v1
       with:
-        SSHKEY:  |
-          -----BEGIN OPENSSH PRIVATE KEY-----
-          b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-          QyNTUxOQAAACCxhDsc4Jetw6+ZRU3e8kTBAOUcDJD0C0wgLkFrQ+m3sAAAAJgVMHDkFTBw
-          5AAAAAtzc2gtZWQyNTUxOQAAACCxhDsc4Jetw6+ZRU3e8kTBAOUcDJD0C0wgLkFrQ+m3sA
-          AAAEC1X81ZVM+fkLipdlmaz5JO7PX8NEqDt+xFQLPG11aH3LGEOxzgl63Dr5lFTd7yRMEA
-          5RwMkPQLTCAuQWtD6bewAAAAFWdpdGh1YkBtb2ZhLmdvdm5ldC51Zw==
-          -----END OPENSSH PRIVATE KEY-----    
-    - name: Configure git for private modules
-      run: git config --global url."https://${{ secrets.gomod-token }}@github.com/".insteadOf "https://github.com/"
+        machine: github.com
+        username: ${{ secrets.git-user }}
+        password: ${{ secrets.gomod-token }}    
     - name: Download dependencies
       run: go mod download
     - name: Run tests
