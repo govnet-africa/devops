@@ -15,7 +15,7 @@ on:
       deploy-host-ip:
         required: false
         type: string
-        default: null
+        default: '109.74.200.222'
       go-version:
         required: false
         type: string
@@ -48,7 +48,7 @@ jobs:
     with:
       service: ${{ inputs.service }}
       deploy-host: "${{ inputs.service }}.ifas.mofa"
-      deploy-host-ip: ${{ inputs.deploy-host-ip || null }}
+      deploy-host-ip: ${{ inputs.deploy-host-ip }}
       tag: ${{ inputs.version || github.sha }}
     permissions:
       id-token: write
