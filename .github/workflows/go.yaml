@@ -30,7 +30,7 @@ on:
         required: false
 jobs:
   build:
-    uses: govnet-mofa/ifas-devops/.github/workflows/go-build.yaml@go1
+    uses: govnet-mofa/ifas-devops/.github/workflows/go-build.yaml@devops
     with:
       service: ${{ inputs.service }}
       version: ${{ inputs.version }}
@@ -44,7 +44,7 @@ jobs:
       contents: read
   deploy:
     needs: build
-    uses: govnet-mofa/ifas-devops/.github/workflows/vps-docker-deploy.yaml@go1
+    uses: govnet-mofa/ifas-devops/.github/workflows/vps-docker-deploy.yaml@devops
     with:
       service: ${{ inputs.service }}
       deploy-host: "${{ inputs.service }}.ifas.mofa"
