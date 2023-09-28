@@ -12,6 +12,10 @@ on:
         required: false
         type: string
         default: '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'
+      deploy-host-ip:
+        required: false
+        type: string
+        default: '109.74.200.222'
     # secrets: 
       git-token:
         type: string
@@ -35,10 +39,9 @@ jobs:
         go-version: ${{ inputs.version }}
         cache: true
     - name: Configure Host SSH
-      uses: shimataro/ssh-key-action@v2
+      uses: LuisEnMarroquin/setup-ssh-action@v2.0.0
       with:
-        name: ifas_github
-        key: |
+        SSHKEY:  |
           -----BEGIN OPENSSH PRIVATE KEY-----
           b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
           QyNTUxOQAAACCxhDsc4Jetw6+ZRU3e8kTBAOUcDJD0C0wgLkFrQ+m3sAAAAJgVMHDkFTBw
