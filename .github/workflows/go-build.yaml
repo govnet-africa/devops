@@ -90,7 +90,7 @@ jobs:
         EXPOSE ${{ inputs.service-port }}
         CMD ["/${{ env.OUTPUT_BIN }}"]
         EOF
-    - name: Build and push ${{ inputs.service }} docker image
+    - name: Docker (build + push) ${{ inputs.service }} image to registry
       uses: docker/build-push-action@v4
       with:
         context: .

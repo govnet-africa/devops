@@ -12,6 +12,14 @@ on:
       service-port:
         required: false
         type: number
+      deploy-host:
+        required: false
+        type: string
+        default: "${{ inputs.service }}.ifas.mofa"
+      deploy-host-ip:
+        required: false
+        type: string
+        default: null
       go-version:
         required: false
         type: string
@@ -38,28 +46,15 @@ jobs:
     permissions:
       id-token: write
       contents: read
-  # publish:
-  #   needs: build
-  #   uses: govnet-mofa/ifas-devops/.github/workflows/ecr-publish.yaml@main
-  #   with:
-  #     ecr-name: ${{ inputs.service }}
-  #     environment: ${{ inputs.environment }}
-  #     artifact-key:  ${{ inputs.service }}-${{ inputs.environment }}-build
-  #     ecr-tag: ${{ inputs.version }}
-  #   permissions:
-  #     id-token: write
-  #     contents: read
-  # deploy:
-  #   needs: publish
-  #   uses: govnet-mofa/ifas-devops/.github/workflows/ec2-docker-deploy.yaml@main
-  #   with:
-  #     service: ${{ inputs.service }}
-  #     service-dockercompose-image: ${{ inputs.service-dockercompose-image }}
-  #     service-dockercompose-name: ${{ inputs.service-dockercompose-name }}
-  #     dockercompose-cmd: ${{ inputs.dockercompose-cmd }}
-  #     tag: ${{ inputs.version }}
-  #     environment: ${{ inputs.environment }}
-  #   permissions:
-  #     id-token: write
-  #     contents: read
+  deploy:
+    needs: build
+    uses: govnet-mofa/ifas-devops/.github/workflows/vps-docker-deploy.yaml@go1
+    with:
+      service: ${{ inputs.service }}
+      deploy-host: ${{ inputs.deploy-host || null }}
+      deploy-host-ip: ${{ inputs.deploy-host-ip || null }}
+      tag: ${{ inputs.version || github.sha }}
+    permissions:
+      id-token: write
+      contents: read
     
