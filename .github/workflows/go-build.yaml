@@ -75,7 +75,7 @@ jobs:
           go build \
           -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ env.SERVICE_BUILD }} -X main.SHA=${{ github.sha }}" \
           -o ${{ env.OUTPUT_BIN }}
-    - name: Write dockerfile
+    - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
         FROM ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
@@ -90,11 +90,6 @@ jobs:
         EXPOSE ${{ inputs.service-port }}
         CMD ["/${{ env.OUTPUT_BIN }}"]
         EOF
-    - name: Build ${{ inputs.service }} 
-      run: |
-        CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
-          go build -ldflags "-s -w -X main.Release=${{ inputs.version }} -X main.SHA=${{ github.sha }}" -o ${{ env.OUTPUT_FILE }}
-        sed '$ d' Dockerfile
     - name: Build and push ${{ inputs.service }} docker image
       uses: docker/build-push-action@v4
       with:
