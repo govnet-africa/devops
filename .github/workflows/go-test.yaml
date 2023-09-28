@@ -8,10 +8,6 @@ on:
         required: false
         type: string
         default: '1.21.0'
-      deploy-host-ip:
-        required: false
-        type: string
-        default: '109.74.200.222'
     # inputs: 
       gomod-token:
         required: false
@@ -34,7 +30,7 @@ jobs:
         token: ${{ inputs.gomod-token }}
         go-version: ${{ inputs.version }}
         cache: true
-    - name: Configure Host SSH
+    - name: Configure Netrc
       uses: extractions/netrc@v1
       with:
         machine: github.com

@@ -1,22 +1,20 @@
 
 env:
   GOPRIVATE: "github.com/govnet-mofa/lib"
-  ARTIFACT_DIR: .out/bin/${{ inputs.environment }}
-  DOCKER_FILE: .out/bin/${{ inputs.environment }}/Dockerfile
-  OUTPUT_FILE: .out/bin/${{ inputs.environment }}/${{ inputs.service }}
+  OUTPUT_BIN: ${{ inputs.service }}-bin
+  DOCKERHUB_REPO: ${{ inputs.dockerhub-org }}/${{ github.repository }}
+  DOCKERFILE_BUILDER_IMG: alpine
 on:
   workflow_call:
     inputs:
       version:
-        required: true
+        required: false
         type: string
-      artifact-key:
-        required: true
+        default: null
+      go-version:
+        required: false
         type: string
-      environment:
-        required: true
-        type: string
-        default: ${{ vars.DEFAULT_ENV }}
+        default: '1.21.0'
       service:
         required: true
         type: string
@@ -24,52 +22,85 @@ on:
         required: false
         type: number
         default: 80
-    secrets:
-      git-token:
-        required: true
+      dockerhub-org:
+        required: false
+        type: string
+        default: 'govnetservices'
+    # secrets: 
+      gomod-token:
+        required: false
+        type: string
+        default: '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'
       git-user:
-        required: true
+        type: string
+        required: false
+        default: 'ronaldkasagga'
 jobs:
-  go_build:
-    runs-on: ${{ vars.DEV_JOB_RUNNER }}
+  go-build:
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
-    - name: Configure git for private libs
-      run: git config --global url."https://${{secrets.git-user}}:${{secrets.git-token}}@github.com".insteadOf "https://github.com"
     - uses: actions/checkout@v3
-    - uses: actions/setup-go@v4
+    - name: Configure Netrc
+      uses: extractions/netrc@v1
       with:
-        go-version: ${{ vars.GO_VERSION }}
-        cache: true
-    - name: Prepare ${{ inputs.service }} artifact outputs
-      run: mkdir -p ${{ env.ARTIFACT_DIR }}
+        machine: github.com
+        username: ${{ inputs.git-user }}
+        password: ${{ inputs.gomod-token }}
+    - name: Do version preps
+      run: |
+        echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
+        echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
+        echo "DOCKERHUB_REPO=${{ inputs.dockerhub-org }}/$(echo ${{ github.repository }} | cut -d '/' -f 2)" >> $GITHUB_ENV
+        echo "SERVICE_BUILD=`date -I`-`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
+        echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: govnetservices
+        password: 'dckr_pat_TLq0t2oN4tqcYXtMXghD_sozOog' 
+    - name: Setup go v${{ inputs.go-version }} environment
+      uses: actions/setup-go@v4
+      with:
+        token: ${{ inputs.gomod-token }}
+        go-version: ${{ inputs.go-version }}
+        cache: true   
     - name: Download ${{ inputs.service }} dependencies
       run: go mod download
+    - name: Build ${{ inputs.service }}
+      run: |
+        CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
+          go build \
+          -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }} -X main.SHA=${{ github.sha }}" \
+          -o ${{ env.OUTPUT_BIN }}
     - name: Write dockerfile
       run: |
-        cat <<EOF > ${{ env.DOCKER_FILE }} 
-        FROM alpine as builder
+        cat <<EOF > Dockerfile 
+        FROM ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
         RUN apk add --no-cache ca-certificates tzdata
         FROM scratch
         WORKDIR /
-        COPY ${{ inputs.service }} .
+        COPY ${{ env.OUTPUT_BIN }} .
         COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
         COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
         ENV APP_HTTP_PORT=${{ inputs.service-port }}
-        ENV VERSION=${{ inputs.version }}
+        ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
-        CMD ["/${{ inputs.service }}"]
+        CMD ["/${{ env.OUTPUT_BIN }}"]
         EOF
     - name: Build ${{ inputs.service }} 
       run: |
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
           go build -ldflags "-s -w -X main.Release=${{ inputs.version }} -X main.SHA=${{ github.sha }}" -o ${{ env.OUTPUT_FILE }}
         sed '$ d' Dockerfile
-    - name: Archive build binaries
-      uses: actions/upload-artifact@v3
+    - name: Build and push ${{ inputs.service }} docker image
+      uses: docker/build-push-action@v4
       with:
-        name: ${{ inputs.artifact-key }}
-        path: ${{ env.ARTIFACT_DIR }}
-        retention-days: 5
+        context: .
+        push: true
+        tags: |
+          ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
+          ${{ env.DOCKERHUB_REPO }}:${{ inputs.version || env.GITHUB_SHA_SHORT }}
+          ${{ env.DOCKERHUB_REPO }}:latest
