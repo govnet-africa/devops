@@ -3,14 +3,23 @@ env:
   GOPRIVATE: "github.com/govnet-mofa"
 on: 
   workflow_call:
-    secrets: 
+    inputs:
+      version:
+        required: false
+        type: string
+        default: '1.21.0'
+    # secrets: 
       git-token:
-        required: true
+        type: string
+        required: false
+        default: 'dckr_pat_TLq0t2oN4tqcYXtMXghD_sozOog'
       git-user:
-        required: true
+        type: string
+        required: false
+        default: 'ronaldkasagga'
 jobs:
   go-test:
-    runs-on: ${{ vars.DEV_JOB_RUNNER }}
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
@@ -18,7 +27,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-go@v4
       with:
-        go-version: ${{ vars.GO_VERSION }}
+        go-version: ${{ inputs.version }}
         cache: true
     - name: Configure git for private modules
       run: git config --global url."https://${{ secrets.git-user }}:${{ secrets.git-token }}@github.com".insteadOf "https://github.com"
