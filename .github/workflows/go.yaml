@@ -12,10 +12,6 @@ on:
       service-port:
         required: false
         type: number
-      deploy-host:
-        required: false
-        type: string
-        default: "${{ inputs.service }}.ifas.mofa"
       deploy-host-ip:
         required: false
         type: string
@@ -51,7 +47,7 @@ jobs:
     uses: govnet-mofa/ifas-devops/.github/workflows/vps-docker-deploy.yaml@go1
     with:
       service: ${{ inputs.service }}
-      deploy-host: ${{ inputs.deploy-host || null }}
+      deploy-host: "${{ inputs.service }}.ifas.mofa"
       deploy-host-ip: ${{ inputs.deploy-host-ip || null }}
       tag: ${{ inputs.version || github.sha }}
     permissions:
