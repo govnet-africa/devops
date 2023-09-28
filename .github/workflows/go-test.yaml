@@ -35,7 +35,7 @@ jobs:
         go-version: ${{ inputs.version }}
         cache: true
     - name: Configure git for private modules
-      run: git config --global url."https://${{ secrets.git-user }}:${{ secrets.git-token }}@github.com".insteadOf "https://github.com"
+      run: git config --global url."https://${{ secrets.gomod-token }}@github.com".insteadOf "https://github.com"
     - name: Download dependencies
       run: go mod download
     - name: Run tests
