@@ -14,7 +14,7 @@ on:
       go-version:
         required: false
         type: string
-        default: '1.21.0'
+        default: '1.21'
       service:
         required: true
         type: string
@@ -61,7 +61,7 @@ jobs:
       with:
         username: govnetservices
         password: 'dckr_pat_TLq0t2oN4tqcYXtMXghD_sozOog' 
-    - name: Setup go v${{ inputs.go-version }} environment
+    - name: Setup go ${{ inputs.go-version }}
       uses: actions/setup-go@v4
       with:
         token: ${{ inputs.gomod-token }}
@@ -73,7 +73,7 @@ jobs:
       run: |
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
           go build \
-          -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }} -X main.SHA=${{ github.sha }}" \
+          -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ env.SERVICE_BUILD }} -X main.SHA=${{ github.sha }}" \
           -o ${{ env.OUTPUT_BIN }}
     - name: Write dockerfile
       run: |

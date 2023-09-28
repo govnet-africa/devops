@@ -30,11 +30,11 @@ jobs:
     with:
       service: ${{ inputs.service }}
       version: ${{ inputs.version }}
-      service-port: ${{ inputs.service-port }}
-      go-version: ${{ inputs.go-version }}
-      dockerhub-org: ${{ inputs.dockerhub-org }}
-      gomod-token: ${{ inputs.gomod-token }}
-      git-user: ${{ inputs.git-user }}
+      service-port: ${{ inputs.service-port || 80 }}
+      go-version: ${{ inputs.go-version || '1.21' }}
+      dockerhub-org: ${{ inputs.dockerhub-org || 'govnetservices' }}
+      gomod-token: ${{ inputs.gomod-token || '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' }}
+      git-user: ${{ inputs.git-user || 'ronaldkasagga' }}
     permissions:
       id-token: write
       contents: read
