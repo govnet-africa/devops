@@ -33,7 +33,7 @@ on:
       mvn-token:
         required: false
         type: string
-        default: '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'
+        default: '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'
       consul-host:
         required: false
         type: string
