@@ -57,8 +57,15 @@ jobs:
                       <url>https://repo1.maven.org/maven2</url>
                     </repository>
                     <repository>
-                      <id>github</id>
+                      <id>ifas</id>
                       <url>https://maven.pkg.github.com/govnet-mofa/ifas</url>
+                      <snapshots>
+                          <enabled>true</enabled>
+                      </snapshots>
+                    </repository>
+                    <repository>
+                      <id>govnet</id>
+                      <url>https://maven.pkg.github.com/govnet-libraries/govbill-java-cli</url>
                       <snapshots>
                           <enabled>true</enabled>
                       </snapshots>
@@ -69,7 +76,12 @@ jobs:
 
           <servers>
               <server>
-                <id>github</id>
+                <id>ifas</id>
+                <username>${{ inputs.mvn-user }}</username>
+                <password>${{ inputs.mvn-token }}</password>
+              </server>
+              <server>
+                <id>govnet</id>
                 <username>${{ inputs.mvn-user }}</username>
                 <password>${{ inputs.mvn-token }}</password>
               </server>
