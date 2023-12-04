@@ -1,0 +1,59 @@
+name: Deploy to docker host
+  
+on: 
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      tag:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+      deploy-host:
+        required: false
+        type: string
+        default: "${{ inputs.service }}.govnet-obrs"
+      deploy-host-ip:
+        required: false
+        type: string
+        default: '0.1.2.3'
+      deploy-host-port:
+        required: false
+        type: string
+        default: '59332'
+      deploy-user:
+        required: false
+        type: string
+        default: 'github-actions'
+      deploy-dir:
+        required: false
+        type: string
+        default: '/deploy/govnet-obrs'
+jobs:
+  docker_deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure Host SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          name: govpay_github
+          known_hosts: |
+            0.0.0.0 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGPc7a8RAUbmZ7c7eCV7DdYN3+o9xvvXNuFGeVakowwm
+          config: |
+            Host ${{ inputs.deploy-host }}
+              HostName ${{ inputs.deploy-host-ip }}
+              User ${{ inputs.deploy-user }}
+              IdentityFile ~/.ssh/govpay_github
+          key: |
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            ssh-key-goes-here
+            -----END OPENSSH PRIVATE KEY-----
+      - name: Overwrite known hosts of ${{ inputs.deploy-host }}
+        run: ssh-keyscan ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
+      - name: Deploy ${{ inputs.service }} with docker
+        run: ssh ${{ inputs.deploy-host }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
