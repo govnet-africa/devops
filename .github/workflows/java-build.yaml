@@ -9,6 +9,10 @@ on:
         required: false
         type: string
         default: null
+      java-platform:
+        required: false
+        type: string
+        default: 'linux/amd64'
       java-version:
         required: false
         type: string
@@ -77,7 +81,7 @@ jobs:
         JRE_HOME: /opt/jre
       run: |
         cat <<EOF > Dockerfile 
-        FROM ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
+        FROM --platform=${{inputs.java-platform}} ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
         USER root
         RUN jlink \
           --module-path "$JAVA_HOME/jmods" \
@@ -91,7 +95,7 @@ jobs:
         USER app
         WORKDIR /app
         COPY target target
-        FROM ${{ inputs.dockerfile-runner-img }}
+        FROM  --platform=${{inputs.java-platform}} ${{ inputs.dockerfile-runner-img }}
         VOLUME /tmp
         COPY --from=builder /app/target/extracted/dependencies/ ./
         COPY --from=builder /app/target/extracted/spring-boot-loader/ ./
