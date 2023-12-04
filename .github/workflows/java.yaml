@@ -1,0 +1,55 @@
+name: Java Deploy
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: false
+        type: string
+        default: null
+      java-version:
+        required: false
+        type: string
+        default: '20'
+      java-distribution:
+        required: false
+        type: string
+        default: 'temurin'
+      jre-cache:
+        required: false
+        type: string
+        default: 'maven'
+      service:
+        required: true
+        type: string
+      service-port:
+        required: false
+        type: number
+        default: 8080
+      spring-profile:
+        required: false
+        type: string
+        default: 'staging'
+jobs:
+  build:
+    uses: govnet-obrs/devops/.github/workflows/java-build.yaml@main
+    with:
+      service: ${{ inputs.service }}
+      service-port: ${{ inputs.service-port }}
+      version:  ${{inputs.version }}
+      java-version: ${{ inputs.java-version }}
+      java-distribution: ${{ inputs.java-distribution }}
+      jre-cache: ${{ inputs.jre-cache }}
+    permissions:
+      id-token: write
+      contents: read
+  deploy:
+    needs: build
+    uses: govnet-obrs/devops/.github/workflows/vps-docker-deploy.yaml@main
+    with:
+      service: ${{ inputs.service }}
+      tag: ${{ inputs.version || github.sha }}
+    permissions:
+      id-token: write
+      contents: read
+    
