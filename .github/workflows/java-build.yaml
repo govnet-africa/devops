@@ -69,6 +69,9 @@ jobs:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
         cache: ${{ inputs.jre-cache }}
+    - name: cleanup configuration
+      run: |
+        echo "todo: clean up configuration files"
     - name: Build with ${{ inputs.jre-cache }}
       run: |
         rm -rf target && \
@@ -121,5 +124,6 @@ jobs:
         push: true
         tags: |
           ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
+          ${{ env.DOCKERHUB_REPO }}:${{ env.SERVICE_BUILD }}
           ${{ env.DOCKERHUB_REPO }}:${{ inputs.version || env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:latest
