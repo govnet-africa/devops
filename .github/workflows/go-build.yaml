@@ -2,7 +2,7 @@
 env:
   GOPRIVATE: "github.com/govnet-ecitizen"
   OUTPUT_BIN: ${{ inputs.service }}-bin
-  DOCKERHUB_REPO: ${{ inputs.dockerhub-org }}/${{ inputs.service }}
+  DOCKERHUB_REPO: ${{ inputs.dockerhub-org }}/${{ inputs.dockerhub-repo }}
   DOCKERFILE_BUILDER_IMG: alpine
 on:
   workflow_call:
@@ -26,6 +26,10 @@ on:
         required: false
         type: string
         default: 'govnetservices'
+      dockerhub-repo:
+        required: false
+        type: string
+        default: ${{inputs.service}}
     # secrets: 
       gomod-token:
         required: false
@@ -53,7 +57,7 @@ jobs:
       run: |
         echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
         echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
-        echo "DOCKERHUB_REPO=${{ inputs.dockerhub-org }}/$(echo ${{ inputs.service }} | cut -d '/' -f 2)" >> $GITHUB_ENV
+        echo "DOCKERHUB_REPO=${{ inputs.dockerhub-org }}/$(echo ${{ inputs.dockerhub-repo }} | cut -d '/' -f 2)" >> $GITHUB_ENV
         echo "SERVICE_BUILD=`date -I`-`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
         echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
     - name: Login to Docker Hub
