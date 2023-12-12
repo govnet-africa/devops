@@ -1,0 +1,83 @@
+name: Java Deploy
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: false
+        type: string
+        default: null
+      java-version:
+        required: false
+        type: string
+        default: '20'
+      java-distribution:
+        required: false
+        type: string
+        default: 'temurin'
+      jre-cache:
+        required: false
+        type: string
+        default: 'maven'
+      service:
+        required: true
+        type: string
+      service-port:
+        required: false
+        type: number
+        default: 8080
+      mvn-user:
+        required: false
+        type: string
+        default: 'ronaldkasagga'
+      mvn-token:
+        required: false
+        type: string
+        default: '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'
+      consul-host:
+        required: false
+        type: string
+        default: 'consul'
+      consul-port:
+        required: false
+        type: number
+        default: 8500
+      dockerhub-org:
+        required: false
+        type: string
+      dockerhub-repo:
+        required: false
+        type: string
+        default: ${{inputs.service}}
+jobs:
+  build:
+    uses: govnet-ecitizen/devops/.github/workflows/java-build.yaml@main
+    with:
+      service: ${{ inputs.service }}
+      service-port: ${{ inputs.service-port }}
+      version:  ${{inputs.version }}
+      java-version: ${{ inputs.java-version }}
+      java-distribution: ${{ inputs.java-distribution }}
+      jre-cache: ${{ inputs.jre-cache }}
+      mvn-user: ${{ inputs.mvn-user }}
+      mvn-token: ${{ inputs.mvn-token }}
+      dockerhub-org: ${{ inputs.dockerhub-org || 'govnetservices' }}
+      dockerhub-repo: ${{ inputs.dockerhub-repo || inputs.service }}
+      consul-host: ${{ inputs.consul-host }}
+      consul-port: ${{ inputs.consul-port }}
+    permissions:
+      id-token: write
+      contents: read
+  deploy:
+    needs: build
+    uses: govnet-ecitizen/devops/.github/workflows/vps-docker-deploy.yaml@main
+    with:
+      service: ${{ inputs.service }}
+      tag: ${{ inputs.version || github.sha }}
+      deploy-host: "${{ inputs.service }}.ugonline"
+      deploy-host-ip: ${{ inputs.deploy-host-ip }}
+      deploy-host-port: ${{ inputs.deploy-host-port }}
+    permissions:
+      id-token: write
+      contents: read
+    

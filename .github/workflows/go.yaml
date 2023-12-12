@@ -1,0 +1,66 @@
+name: Go Deploy
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: false
+        type: string
+      service:
+        required: true
+        type: string
+      service-port:
+        required: false
+        type: number
+      deploy-host-ip:
+        required: false
+        type: string
+        default: '212.71.251.167'
+      deploy-host-port:
+        required: false
+        type: number
+        default: 57243
+      go-version:
+        required: false
+        type: string
+      dockerhub-org:
+        required: false
+        type: string
+      dockerhub-repo:
+        required: false
+        type: string
+        default: ${{inputs.service}}
+      gomod-token:
+        required: false
+        type: string
+      git-user:
+        type: string
+        required: false
+jobs:
+  build:
+    uses: govnet-ecitizen/devops/.github/workflows/go-build.yaml@main
+    with:
+      service: ${{ inputs.service }}
+      version: ${{ inputs.version }}
+      service-port: ${{ inputs.service-port || 80 }}
+      go-version: ${{ inputs.go-version || '1.21' }}
+      dockerhub-org: ${{ inputs.dockerhub-org || 'govnetservices' }}
+      dockerhub-repo: ${{ inputs.dockerhub-repo || inputs.service }}
+      gomod-token: ${{ inputs.gomod-token || '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' }}
+      git-user: ${{ inputs.git-user || 'ronaldkasagga' }}
+    permissions:
+      id-token: write
+      contents: read
+  deploy:
+    needs: build
+    uses: govnet-ecitizen/devops/.github/workflows/vps-docker-deploy.yaml@main
+    with:
+      service: ${{ inputs.service }}
+      deploy-host: "${{ inputs.service }}.ugonline"
+      deploy-host-ip: ${{ inputs.deploy-host-ip }}
+      deploy-host-port: ${{ inputs.deploy-host-port }}
+      tag: ${{ inputs.version || github.sha }}
+    permissions:
+      id-token: write
+      contents: read
+    

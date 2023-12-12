@@ -1,0 +1,94 @@
+name: Java Tests
+env:
+  GOPRIVATE: "github.com/govnet-ecitizen"
+on: 
+  workflow_call:
+    inputs:
+      java-version:
+        required: false
+        type: string
+        default: '20'
+      java-distribution:
+        required: false
+        type: string
+        default: 'temurin'
+      jre-cache:
+        required: false
+        type: string
+        default: 'maven'
+      mvn-user:
+        required: false
+        type: string
+        default: 'ronaldkasagga'
+      mvn-token:
+        required: false
+        type: string
+        default: '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'
+jobs:
+  java-test:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup JDK ${{ inputs.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: ${{ inputs.jre-cache }}
+    - name: Set up Maven settings.xml
+      run: |
+        cat <<EOF > ~/.m2/settings.xml
+        <?xml version="1.0" encoding="UTF-8"?>
+        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+          <activeProfiles>
+              <activeProfile>github</activeProfile>
+          </activeProfiles>
+          <profiles>
+              <profile>
+                <id>github</id>
+                <repositories>
+                    <repository>
+                      <id>central</id>
+                      <url>https://repo1.maven.org/maven2</url>
+                    </repository>
+                    <repository>
+                      <id>govpay</id>
+                      <url>https://maven.pkg.github.com/govnet-ecitizen/govpay</url>
+                      <snapshots>
+                          <enabled>true</enabled>
+                      </snapshots>
+                    </repository>
+                    <repository>
+                      <id>govnet</id>
+                      <url>https://maven.pkg.github.com/govnet-libraries/govbill-java-cli</url>
+                      <snapshots>
+                          <enabled>true</enabled>
+                      </snapshots>
+                    </repository>
+                </repositories>
+              </profile>
+          </profiles>
+
+          <servers>
+              <server>
+                <id>govpay</id>
+                <username>${{ inputs.mvn-user }}</username>
+                <password>${{ inputs.mvn-token }}</password>
+              </server>
+              <server>
+                <id>govnet</id>
+                <username>${{ inputs.mvn-user }}</username>
+                <password>${{ inputs.mvn-token }}</password>
+              </server>
+          </servers>
+        </settings>
+        EOF
+    - name: Build with ${{ inputs.jre-cache }}
+      run: mvn -B package --file pom.xml
+    - name: Test with ${{ inputs.jre-cache }}
+      run: mvn test --file pom.xml

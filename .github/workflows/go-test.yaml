@@ -1,0 +1,42 @@
+name: Go Tests
+env:
+  GOPRIVATE: "github.com/govnet-ecitizen"
+on: 
+  workflow_call:
+    inputs:
+      version:
+        required: false
+        type: string
+        default: '1.21.0'
+    # inputs: 
+      gomod-token:
+        required: false
+        type: string
+        default: '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'
+      git-user:
+        type: string
+        required: false
+        default: 'ronaldkasagga'
+jobs:
+  go-test:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v4
+      with:
+        token: ${{ inputs.gomod-token }}
+        go-version: ${{ inputs.version }}
+        cache: true
+    - name: Configure Netrc
+      uses: extractions/netrc@v1
+      with:
+        machine: github.com
+        username: ${{ inputs.git-user }}
+        password: ${{ inputs.gomod-token }}    
+    - name: Download dependencies
+      run: go mod download
+    - name: Run tests
+      run: go test ./...
