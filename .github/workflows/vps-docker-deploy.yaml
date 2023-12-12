@@ -41,14 +41,16 @@ jobs:
       - name: Configure Host SSH
         uses: shimataro/ssh-key-action@v2
         with:
-          name: govpay_github
+          name: ugonline_github
           known_hosts: |
             ${{ inputs.deploy-host-ip }} ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGPc7a8RAUbmZ7c7eCV7DdYN3+o9xvvXNuFGeVakowwm
           config: |
             Host ${{ inputs.deploy-host }}
               HostName ${{ inputs.deploy-host-ip }}
               User ${{ inputs.deploy-user }}
-              IdentityFile ~/.ssh/govpay_github
+              Port ${{ inputs.deploy-host-port }}
+              IdentityFile ~/.ssh/ugonline_github
+              ForwardAgent yes
           key: |
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
@@ -58,6 +60,6 @@ jobs:
             4gixLrgLWbOzfm3sf/f8AAAAHGdpdGh1Yi1hY3Rpb25zQGdvdnBheS5nb3ZuZXQB
             -----END OPENSSH PRIVATE KEY-----
       - name: Overwrite known hosts of ${{ inputs.deploy-host }}
-        run: ssh-keyscan ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
+        run: ssh-keyscan -p ${{inputs.deploy-host-port}} ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
       - name: Deploy ${{ inputs.service }} with docker
-        run: ssh ${{ inputs.deploy-host }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
+        run: ssh ${{ inputs.deploy-host }} "make -C ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"

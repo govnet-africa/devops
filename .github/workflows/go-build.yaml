@@ -91,7 +91,7 @@ jobs:
         COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
         ENV APP_HTTP_PORT=${{ inputs.service-port }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
-        ENV SOURCE=github.com/${{ github.repository_id }}/${{ github.repository }}@${{ inputs.version || env.GITHUB_SHA_SHORT }}
+        ENV SOURCE=github.com/${{ github.repository_owner }}/${{ github.repository }}@${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
         CMD ["/${{ env.OUTPUT_BIN }}"]
         EOF
@@ -102,5 +102,6 @@ jobs:
         push: true
         tags: |
           ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
+          ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:${{ inputs.version || env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:latest
