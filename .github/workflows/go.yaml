@@ -38,7 +38,7 @@ on:
         required: false
 jobs:
   build:
-    uses: govnet-ecitizen/devops/.github/workflows/go-build.yaml@main
+    uses: govnet-ecitizen/devops/.github/workflows/go-build.yaml@v1
     with:
       service: ${{ inputs.service }}
       version: ${{ inputs.version }}
@@ -53,7 +53,7 @@ jobs:
       contents: read
   deploy:
     needs: build
-    uses: govnet-ecitizen/devops/.github/workflows/vps-docker-deploy.yaml@main
+    uses: govnet-ecitizen/devops/.github/workflows/vps-docker-deploy.yaml@v1
     with:
       service: ${{ inputs.service }}
       deploy-host: "${{ inputs.service }}.ugonline"

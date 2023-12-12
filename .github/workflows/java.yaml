@@ -51,7 +51,7 @@ on:
         default: ${{inputs.service}}
 jobs:
   build:
-    uses: govnet-ecitizen/devops/.github/workflows/java-build.yaml@main
+    uses: govnet-ecitizen/devops/.github/workflows/java-build.yaml@v1
     with:
       service: ${{ inputs.service }}
       service-port: ${{ inputs.service-port }}
@@ -70,7 +70,7 @@ jobs:
       contents: read
   deploy:
     needs: build
-    uses: govnet-ecitizen/devops/.github/workflows/vps-docker-deploy.yaml@main
+    uses: govnet-ecitizen/devops/.github/workflows/vps-docker-deploy.yaml@v1
     with:
       service: ${{ inputs.service }}
       tag: ${{ inputs.version || github.sha }}

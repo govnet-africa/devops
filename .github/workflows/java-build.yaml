@@ -96,8 +96,8 @@ jobs:
                       <url>https://repo1.maven.org/maven2</url>
                     </repository>
                     <repository>
-                      <id>govpay</id>
-                      <url>https://maven.pkg.github.com/govnet-ecitizen/govpay</url>
+                      <id>ecitizen</id>
+                      <url>https://maven.pkg.github.com/govnet-ecitizen/ecitizen</url>
                       <snapshots>
                           <enabled>true</enabled>
                       </snapshots>
@@ -115,7 +115,7 @@ jobs:
 
           <servers>
               <server>
-                <id>govpay</id>
+                <id>ecitizen</id>
                 <username>${{ inputs.mvn-user }}</username>
                 <password>${{ inputs.mvn-token }}</password>
               </server>
