@@ -91,7 +91,7 @@ jobs:
         COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
         ENV APP_HTTP_PORT=${{ inputs.service-port }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
-        ENV SOURCE=github.com/${{ github.repository_owner }}/${{ github.repository }}@${{ inputs.version || env.GITHUB_SHA_SHORT }}
+        ENV SOURCE=github.com/${{ github.repository }}@${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
         CMD ["/${{ env.OUTPUT_BIN }}"]
         EOF
