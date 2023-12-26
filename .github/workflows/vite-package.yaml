@@ -1,8 +1,4 @@
-env:
-  ARTIFACT_DIR: .out/build/${{ inputs.environment }}
-  DOCKER_FILE: .out/build/${{ inputs.environment }}/Dockerfile
-  NGINX_CONF: .out/build/${{ inputs.environment }}/nginx.conf
-  ENV_FILE: .out/build/${{ inputs.environment }}/.env
+
 on:
   workflow_call:
     inputs:
@@ -95,7 +91,11 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || 'dckr_pat_TLq0t2oN4tqcYXtMXghD_sozOog' }}
       - name: Build and push docker image
         uses: docker/build-push-action@v4
-        env: 
+        env:
+          ARTIFACT_DIR: .out/build/${{ inputs.environment }}
+          DOCKER_FILE: .out/build/${{ inputs.environment }}/Dockerfile
+          NGINX_CONF: .out/build/${{ inputs.environment }}/nginx.conf
+          ENV_FILE: .out/build/${{ inputs.environment }}/.env
           DOCKERHUB_REPO: ${{ vars.DOCKERHUB_ORG || 'govnetservices' }}/${{ inputs.dockerhub-repo }}
         with:
           context: ${{ env.ARTIFACT_DIR }}
