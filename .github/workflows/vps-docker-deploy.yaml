@@ -32,7 +32,7 @@ on:
         type: string
         default: '/deploy/ugo'
 jobs:
-  docker_deploy:
+  docker-compose:
     runs-on: ubuntu-latest
     permissions: 
       id-token: write
