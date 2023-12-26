@@ -5,19 +5,12 @@ on:
       portal: 
         required: true
         type: string
-      portal-port: 
-        required: true
-        type: number
-        default: ${{ vars.PORTAL_PORT || 80 }}
-      dockerhub-repo: 
-        required: false
-        type: string
       environment: 
-        required: true
+        required: false
         type: string
         default: ${{ vars.BUILD_ENV || 'develop' }}
       node-version: 
-        required: true
+        required: false
         type: string
         default: ${{ vars.NODE_VERSION || 'v20.3.0' }}
 jobs:
