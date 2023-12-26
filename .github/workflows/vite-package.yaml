@@ -15,7 +15,7 @@ on:
       portal-port: 
         required: false
         type: number
-        default: ${{ vars.PORTAL_PORT || 80 }}
+        default: ${{ vars.PORTAL_PORT || '80' }}
       dockerhub-repo: 
         required: false
         type: string
