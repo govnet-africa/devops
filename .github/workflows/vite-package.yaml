@@ -35,6 +35,8 @@ jobs:
       - name: Package Cache
         id: npm-package-cache
         uses: actions/cache@v3
+        env:
+          ARTIFACT_DIR: .out/build/${{ inputs.environment }}
         with:
           key: package-${{ github.sha }}
           path: ${{ env.ARTIFACT_DIR }}
@@ -47,11 +49,18 @@ jobs:
           path: ./dist
       - name: Prepare ${{ inputs.portal }} artifact output dir
         if: steps.npm-package-cache.outputs.cache-hit != 'true'
+        env:
+          ARTIFACT_DIR: .out/build/${{ inputs.environment }}
         run: |
           mkdir -p ${{ env.ARTIFACT_DIR }}
           cp -r dist ${{ env.ARTIFACT_DIR }}
       - name: Write config files
         if: steps.npm-package-cache.outputs.cache-hit != 'true'
+        env:
+          ARTIFACT_DIR: .out/build/${{ inputs.environment }}
+          DOCKER_FILE: .out/build/${{ inputs.environment }}/Dockerfile
+          NGINX_CONF: .out/build/${{ inputs.environment }}/nginx.conf
+          ENV_FILE: .out/build/${{ inputs.environment }}/.env
         run: |
           cat <<EOF > ${{ env.NGINX_CONF }}
           server {
@@ -72,6 +81,8 @@ jobs:
           EOF
       - name: Write Dockerfile
         if: steps.npm-package-cache.outputs.cache-hit != 'true'
+        env:
+          DOCKER_FILE: .out/build/${{ inputs.environment }}/Dockerfile
         run: |
           cat <<EOF > ${{ env.DOCKER_FILE }} 
           FROM nginx:stable-alpine
@@ -93,9 +104,6 @@ jobs:
         uses: docker/build-push-action@v4
         env:
           ARTIFACT_DIR: .out/build/${{ inputs.environment }}
-          DOCKER_FILE: .out/build/${{ inputs.environment }}/Dockerfile
-          NGINX_CONF: .out/build/${{ inputs.environment }}/nginx.conf
-          ENV_FILE: .out/build/${{ inputs.environment }}/.env
           DOCKERHUB_REPO: ${{ vars.DOCKERHUB_ORG || 'govnetservices' }}/${{ inputs.dockerhub-repo }}
         with:
           context: ${{ env.ARTIFACT_DIR }}
