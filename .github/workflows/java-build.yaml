@@ -115,7 +115,7 @@ jobs:
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
         RUN sed -i 's/\/bin\/ash/\/sbin\/nologin/g' /etc/passwd
-        ENTRYPOINT ["${{ env.JRE_HOME }}/bin/java", "-Djava.security.egd=file:/prod/./urandom", "org.springframework.boot.loader.JarLauncher", "--spring.profiles.active=${{inputs.spring-profile}}"]
+        ENTRYPOINT ["${{ env.JRE_HOME }}/bin/java", "-Djava.security.egd=file:/prod/./urandom", "org.springframework.boot.loader.JarLauncher"]
         EOF
     - name: Set docker branch tag
       run: |
