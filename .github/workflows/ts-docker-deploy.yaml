@@ -32,13 +32,13 @@ on:
         type: string
         default: '/deploy/obrs'
 jobs:
-  docker_deploy:
+  tailscale-docker-deploy:
     runs-on: ubuntu-latest
     permissions: 
       id-token: write
       contents: read
     steps:
-      - name: Setup TS
+      - name: Init Connection to OBRS Infrastructure
         uses: tailscale/github-action@v2
         with:
           authkey: tskey-auth-kWmtfo5CNTRL-QEdVDjt7tH86ZSVhDq58H8U7rtMzHWA8
@@ -49,6 +49,7 @@ jobs:
           known_hosts: placeholder
           config: |
             Host ${{ inputs.deploy-host }}
+              Port ${{ inputs.deploy-host-port }}
               HostName ${{ inputs.deploy-host-ip }}
               User ${{ inputs.deploy-user }}
               IdentityFile ~/.ssh/govnet_github
@@ -61,6 +62,6 @@ jobs:
             2tZm9shU7Rc/0Sp533NxAAAAGGFjdGlvbnNAZ292bmV0LnByb2Qub2JycwECAwQF
             -----END OPENSSH PRIVATE KEY-----
       - name: Overwrite known hosts of ${{ inputs.deploy-host }}
-        run: ssh-keyscan ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
+        run: ssh-keyscan -p ${{inputs.deploy-host-port}}  ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
       - name: Deploy ${{ inputs.service }} with docker
         run: ssh ${{ inputs.deploy-host }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
