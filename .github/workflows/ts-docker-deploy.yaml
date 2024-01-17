@@ -1,0 +1,66 @@
+name: Deploy to docker host
+  
+on: 
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      tag:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+      deploy-host:
+        required: false
+        type: string
+        default: "${{ inputs.service }}.govnet-obrs"
+      deploy-host-ip:
+        required: false
+        type: string
+        default: '100.114.94.23'
+      deploy-host-port:
+        required: false
+        type: number
+        default: 59643
+      deploy-user:
+        required: false
+        type: string
+        default: 'github-actions'
+      deploy-dir:
+        required: false
+        type: string
+        default: '/deploy/obrs'
+jobs:
+  docker_deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: read
+    steps:
+      - name: Setup TS
+        uses: tailscale/github-action@v2
+        with:
+          authkey: tskey-auth-kWmtfo5CNTRL-QEdVDjt7tH86ZSVhDq58H8U7rtMzHWA8
+      - name: Configure Host SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          name: govnet_github
+          known_hosts: placeholder
+          config: |
+            Host ${{ inputs.deploy-host }}
+              HostName ${{ inputs.deploy-host-ip }}
+              User ${{ inputs.deploy-user }}
+              IdentityFile ~/.ssh/govnet_github
+          key: |
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+            QyNTUxOQAAACAD1pyb7e0QaL7gfy9l60XdTdrWZvbIVO0XP9Eqed9zcQAAAKA9AfMQPQHz
+            EAAAAAtzc2gtZWQyNTUxOQAAACAD1pyb7e0QaL7gfy9l60XdTdrWZvbIVO0XP9Eqed9zcQ
+            AAAEDhQyGtPIejsnjCcm0+jXzHcAfyOYlQuXcJjOBGnOHMBgPWnJvt7RBovuB/L2XrRd1N
+            2tZm9shU7Rc/0Sp533NxAAAAGGFjdGlvbnNAZ292bmV0LnByb2Qub2JycwECAwQF
+            -----END OPENSSH PRIVATE KEY-----
+      - name: Overwrite known hosts of ${{ inputs.deploy-host }}
+        run: ssh-keyscan ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
+      - name: Deploy ${{ inputs.service }} with docker
+        run: ssh ${{ inputs.deploy-host }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
