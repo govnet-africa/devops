@@ -1,6 +1,6 @@
 env:
   DOCKERFILE_BUILDER_IMG: eclipse-temurin:${{ inputs.java-version }}-jdk
-  DOCKERHUB_REPO: ${{ inputs.dockeruser }}/${{ inputs.service }}
+  DOCKERHUB_REPO: ${{ inputs.dockeruser }}/${{ github.event.repository.name }}
   DOCKER_BUILDKIT: 1
 on:
   workflow_call:
@@ -60,7 +60,6 @@ jobs:
       run: |
         echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
         echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
-        echo "DOCKERHUB_REPO=${{ inputs.dockeruser }}/$(echo ${{ inputs.service }} | cut -d '/' -f 2)" >> $GITHUB_ENV
         echo "SERVICE_BUILD=`date -I`-`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
     - name: Login to Docker Hub
       uses: docker/login-action@v2
