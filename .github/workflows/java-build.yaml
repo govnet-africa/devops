@@ -85,13 +85,12 @@ jobs:
       run: |
         cat <<EOF > Dockerfile 
         FROM --platform=${{inputs.java-platform}} ${{ inputs.dockerfile-runner-img }}
-        ARG JAR_FILE=target/*.jar
         WORKDIR /app
         RUN addgroup --system govnet
         RUN adduser --system --ingroup govnet --shell /bin/sh --disabled-password --no-create-home govop
         RUN chown -R govop:govnet /app
         USER govop
-        COPY ${JAR_FILE} /app/app.jar
+        COPY target/*.jar /app/app.jar
         ENV APP_PORT=${{ inputs.service-port }}
         ENV BUILD=${{ env.SERVICE_BUILD }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
