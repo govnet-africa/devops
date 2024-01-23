@@ -78,7 +78,7 @@ jobs:
     - name: Build with ${{ inputs.jre-cache }}
       run: |
         rm -rf target && \
-        mvn -B package --file pom.xml 
+        mvn -B package --file pom.xml -DskipTests 
     - name: Write Dockerfile
       env:
         JRE_HOME: /opt/jre
