@@ -84,21 +84,19 @@ jobs:
         JRE_HOME: /opt/jre
       run: |
         cat <<EOF > Dockerfile 
-        FROM --platform=${{inputs.java-platform}} ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
-        USER app
-        WORKDIR /app
-        COPY target target
         FROM --platform=${{inputs.java-platform}} ${{ inputs.dockerfile-runner-img }}
-        COPY *.jar app.jar
-        COPY --from=builder /opt/jre-minimal ${{ env.JRE_HOME }}
-        ENV JAVA_HOME=${{ env.JRE_HOME }}
-        ENV PATH="$PATH:$JAVA_HOME/bin"
+        ARG JAR_FILE=target/*.jar
+        WORKDIR /app
+        RUN addgroup --system govnet
+        RUN adduser --system --ingroup govnet --shell /bin/sh --disabled-password --no-create-home govop
+        RUN chown -R govop:govnet /app
+        USER govop
+        COPY ${JAR_FILE} /app/app.jar
         ENV APP_PORT=${{ inputs.service-port }}
         ENV BUILD=${{ env.SERVICE_BUILD }}
         ENV VERSION=${{ inputs.service }}-${{ inputs.version || env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
-        RUN sed -i 's/\/bin\/ash/\/sbin\/nologin/g' /etc/passwd
-        ENTRYPOINT ["${{ env.JRE_HOME }}/bin/java", "-Djava.security.egd=file:/prod/./urandom", "-jar", "app.jar"]
+        ENTRYPOINT ["java", "-Djava.security.egd=file:/prod/./urandom", "-jar", "/app/app.jar"]
         EOF
     - name: Set docker branch tag
       run: |
