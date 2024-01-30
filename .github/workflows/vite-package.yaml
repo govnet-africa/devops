@@ -75,7 +75,7 @@ jobs:
           cat <<EOF > ${{ env.DOCKER_FILE }} 
           FROM nginx:stable-alpine
           COPY dist/ /usr/share/nginx/html
-          COPY nginx.conf /etc/nginx/conf.d/default.conf
+          COPY nginx.conf /etc/nginx/conf.d/obrs.conf
           ENV VERSION=${{ github.sha }}
           EXPOSE ${{ inputs.portal-port }}
           CMD ["nginx", "-g", "daemon off;"]
@@ -84,9 +84,9 @@ jobs:
         run: |
           echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
           echo "BUILD_TAG=${{ inputs.tag }}" >> $GITHUB_ENV
-          if [ "${{ github.ref }}" != "refs/heads/ifas-dev" ]; then
+          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
             echo "BUILD_TAG=dev" >> $GITHUB_ENV
-          elif [ "${{ github.ref }}" != "refs/heads/ifas-stg" ]; then
+          elif [ "${{ github.ref }}" == "refs/heads/staging" ]; then
             echo "BUILD_TAG=stg" >> $GITHUB_ENV
           fi
       - name: Set dev tag
