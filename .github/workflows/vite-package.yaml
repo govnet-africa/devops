@@ -75,7 +75,7 @@ jobs:
           cat <<EOF > ${{ env.DOCKER_FILE }} 
           FROM nginx:stable-alpine
           COPY dist/ /usr/share/nginx/html
-          COPY nginx.conf /etc/nginx/conf.d/obrs.conf
+          # COPY nginx.conf /etc/nginx/conf.d/default.conf
           ENV VERSION=${{ github.sha }}
           EXPOSE ${{ inputs.portal-port }}
           CMD ["nginx", "-g", "daemon off;"]
