@@ -32,7 +32,7 @@ on:
         default: 'staging'
 jobs:
   build:
-    uses: govnet-obrs/devops/.github/workflows/java-build.yaml@v2
+    uses: govnet-obrs/devops/.github/workflows/java-build.yaml@v2.1
     with:
       service: ${{ inputs.service }}
       service-port: ${{ inputs.service-port }}
@@ -45,7 +45,7 @@ jobs:
       contents: read
   deploy:
     needs: build
-    uses: govnet-obrs/devops/.github/workflows/ts-docker-deploy.yaml@v2
+    uses: govnet-obrs/devops/.github/workflows/ts-docker-deploy.yaml@v2.1
     with:
       service: ${{ inputs.service }}
       tag: ${{ inputs.version || github.sha }}
