@@ -40,6 +40,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       jre-cache: ${{ inputs.jre-cache }}
+      dockerfile-runner-img: 'eclipse-temurin:21.0.1_12-jre-alpine'
     permissions:
       id-token: write
       contents: read
