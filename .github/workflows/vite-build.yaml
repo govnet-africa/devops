@@ -37,7 +37,7 @@ jobs:
           # registry-url: 'https://github.com/govnet-mofa/ifas-fe-core'
       - name: Download ${{ inputs.portal }} dependencies
         if: steps.cache-npm-build.outputs.cache-hit != 'true'
-        run: npm i
+        run: npm i --force
       - name: Build ${{ inputs.portal }} dependencies
         env:
           NODE_OPTIONS: --openssl-legacy-provider

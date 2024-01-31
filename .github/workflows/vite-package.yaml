@@ -63,12 +63,9 @@ jobs:
             listen       80;
             listen  [::]:80;
 
-            root /usr/share/nginx/html;
-            
             location / {
               root /usr/share/nginx/html;
               try_files $uri $uri/ /index.html;
-              index index.html index.htm;
             }
           }
           EOF
