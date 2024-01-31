@@ -11,10 +11,6 @@ on:
         required: false
         type: string
         default: ${{ github.sha }}
-      deploy-host:
-        required: false
-        type: string
-        default: "${{ inputs.service }}.govnet-obrs"
       deploy-host-ip:
         required: false
         type: string
@@ -37,6 +33,8 @@ jobs:
     permissions: 
       id-token: write
       contents: read
+    env:
+      DEPLOY_HOST: "${{ inputs.service }}.govnet.obrs"
     steps:
       - name: Init Connection to OBRS Infrastructure
         uses: tailscale/github-action@v2
@@ -48,7 +46,7 @@ jobs:
           name: govnet_github
           known_hosts: placeholder
           config: |
-            Host ${{ inputs.deploy-host }}
+            Host ${{ env.DEPLOY_HOST }}
               Port ${{ inputs.deploy-host-port }}
               HostName ${{ inputs.deploy-host-ip }}
               User ${{ inputs.deploy-user }}
@@ -61,7 +59,7 @@ jobs:
             AAAEDhQyGtPIejsnjCcm0+jXzHcAfyOYlQuXcJjOBGnOHMBgPWnJvt7RBovuB/L2XrRd1N
             2tZm9shU7Rc/0Sp533NxAAAAGGFjdGlvbnNAZ292bmV0LnByb2Qub2JycwECAwQF
             -----END OPENSSH PRIVATE KEY-----
-      - name: Overwrite known hosts of ${{ inputs.deploy-host }}
+      - name: Overwrite known hosts of ${{ env.DEPLOY_HOST }}
         run: ssh-keyscan -p ${{inputs.deploy-host-port}}  ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
       - name: Deploy ${{ inputs.service }} with docker
-        run: ssh ${{ inputs.deploy-host }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
+        run: ssh ${{ env.DEPLOY_HOST }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
