@@ -51,7 +51,7 @@ jobs:
       contents: read
   staging:
     needs: build
-    if: github.ref == 'refs/head/staging'
+    if: github.ref == 'refs/heads/staging'
     uses: govnet-obrs/devops/.github/workflows/vps-docker-deploy.yaml@v2.3
     with:
       service: ${{ inputs.service }}
@@ -61,7 +61,7 @@ jobs:
       contents: read
   recovery:
     needs: build
-    if: github.ref == 'refs/head/recovery'
+    if: github.ref == 'refs/heads/recovery'
     uses: govnet-obrs/devops/.github/workflows/ts-docker-deploy.yaml@v2.3
     with:
       service: ${{ inputs.service }}
@@ -71,7 +71,7 @@ jobs:
       contents: read
   prod:
     needs: build
-    if: github.ref == 'refs/head/production'
+    if: github.ref == 'refs/heads/production'
     uses: govnet-obrs/devops/.github/workflows/ts-docker-deploy.yaml@v2.3
     with:
       service: ${{ inputs.service }}
