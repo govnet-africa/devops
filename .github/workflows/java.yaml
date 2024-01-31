@@ -30,6 +30,11 @@ on:
         required: false
         type: string
         default: 'staging'
+      dockerfile-runner-img:
+        required: false
+        type: string
+        default: 'eclipse-temurin:${{ inputs.java-version }}-jre'
+      
 jobs:
   build:
     uses: govnet-obrs/devops/.github/workflows/java-build.yaml@v2.3
@@ -40,6 +45,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       jre-cache: ${{ inputs.jre-cache }}
+      dockerfile-runner-img: ${{ inputs.dockerfile-runner-img }}
     permissions:
       id-token: write
       contents: read

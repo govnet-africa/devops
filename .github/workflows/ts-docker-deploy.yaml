@@ -60,6 +60,6 @@ jobs:
             2tZm9shU7Rc/0Sp533NxAAAAGGFjdGlvbnNAZ292bmV0LnByb2Qub2JycwECAwQF
             -----END OPENSSH PRIVATE KEY-----
       - name: Overwrite known hosts of ${{ env.DEPLOY_HOST }}
-        run: ssh-keyscan -p ${{inputs.deploy-host-port}}  ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
+        run: ssh-keyscan -p ${{inputs.deploy-host-port}} ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
       - name: Deploy ${{ inputs.service }} with docker
         run: ssh ${{ env.DEPLOY_HOST }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
