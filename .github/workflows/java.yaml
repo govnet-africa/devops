@@ -32,7 +32,7 @@ on:
         default: 'staging'
 jobs:
   build:
-    uses: govnet-obrs/devops/.github/workflows/java-build.yaml@main
+    uses: govnet-obrs/devops/.github/workflows/java-build.yaml@v2.3
     with:
       service: ${{ inputs.service }}
       service-port: ${{ inputs.service-port }}
@@ -43,9 +43,30 @@ jobs:
     permissions:
       id-token: write
       contents: read
-  deploy:
+  staging:
     needs: build
-    uses: govnet-obrs/devops/.github/workflows/vps-docker-deploy.yaml@main
+    if: github.ref == 'refs/head/staging'
+    uses: govnet-obrs/devops/.github/workflows/vps-docker-deploy.yaml@v2.3
+    with:
+      service: ${{ inputs.service }}
+      tag: ${{ inputs.version || github.sha }}
+    permissions:
+      id-token: write
+      contents: read
+  recovery:
+    needs: build
+    if: github.ref == 'refs/head/recovery'
+    uses: govnet-obrs/devops/.github/workflows/ts-docker-deploy.yaml@v2.3
+    with:
+      service: ${{ inputs.service }}
+      tag: ${{ inputs.version || github.sha }}
+    permissions:
+      id-token: write
+      contents: read
+  prod:
+    needs: build
+    if: github.ref == 'refs/head/production'
+    uses: govnet-obrs/devops/.github/workflows/ts-docker-deploy.yaml@v2.3
     with:
       service: ${{ inputs.service }}
       tag: ${{ inputs.version || github.sha }}

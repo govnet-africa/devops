@@ -11,18 +11,14 @@ on:
         required: false
         type: string
         default: ${{ github.sha }}
-      deploy-host:
-        required: false
-        type: string
-        default: "${{ inputs.service }}.govnet-obrs"
       deploy-host-ip:
         required: false
         type: string
-        default: '0.1.2.3'
+        default: 172.232.194.72
       deploy-host-port:
         required: false
-        type: string
-        default: '59332'
+        type: number
+        default: 57244
       deploy-user:
         required: false
         type: string
@@ -30,30 +26,36 @@ on:
       deploy-dir:
         required: false
         type: string
-        default: '/deploy/govnet-obrs'
+        default: '/deploy/obrs-be'
 jobs:
   docker_deploy:
     runs-on: ubuntu-latest
     permissions: 
       id-token: write
       contents: read
+    env:
+      DEPLOY_HOST: "${{ inputs.service }}.govnet"
     steps:
       - name: Configure Host SSH
         uses: shimataro/ssh-key-action@v2
         with:
-          name: govpay_github
-          known_hosts: |
-            0.0.0.0 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGPc7a8RAUbmZ7c7eCV7DdYN3+o9xvvXNuFGeVakowwm
+          name: govdev_github
+          known_hosts: change-me
           config: |
-            Host ${{ inputs.deploy-host }}
+            Host ${{ env.DEPLOY_HOST }}
+              Port ${{ inputs.deploy-host-port }}
               HostName ${{ inputs.deploy-host-ip }}
               User ${{ inputs.deploy-user }}
-              IdentityFile ~/.ssh/govpay_github
+              IdentityFile ~/.ssh/govdev_github
           key: |
             -----BEGIN OPENSSH PRIVATE KEY-----
-            ssh-key-goes-here
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+            QyNTUxOQAAACBCsCnzNzBMP4YbWHaKr3/RFqvWrfsJpY9MrbUrLMqvGAAAAKCOowF8jqMB
+            fAAAAAtzc2gtZWQyNTUxOQAAACBCsCnzNzBMP4YbWHaKr3/RFqvWrfsJpY9MrbUrLMqvGA
+            AAAEDChozEnz6zmgQJTNUCuf70AkQwMFNNvS+IAkGQpGOXuEKwKfM3MEw/hhtYdoqvf9EW
+            q9at+wmlj0yttSssyq8YAAAAGWFjdGlvbnNAc3RhZ2Uub2Jycy5nb3ZuZXQBAgME
             -----END OPENSSH PRIVATE KEY-----
-      - name: Overwrite known hosts of ${{ inputs.deploy-host }}
+      - name: Overwrite known hosts of ${{ env.DEPLOY_HOST }}
         run: ssh-keyscan ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
       - name: Deploy ${{ inputs.service }} with docker
-        run: ssh ${{ inputs.deploy-host }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
+        run: ssh ${{ env.DEPLOY_HOST }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
