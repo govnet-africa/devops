@@ -1,0 +1,61 @@
+version: '3'
+
+volumes:
+  pgdb:
+
+networks:
+  dev-ugonline:
+    external: true
+
+services:
+
+  consul:
+    image: hashicorp/consul:latest
+    container_name: ${PROJECT}-consul
+    restart: unless-stopped
+    networks:
+      dev-ugonline:
+
+  pgdb:
+    image: postgres:14.5
+    container_name: ${PROJECT}-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdb:/var/lib/postgresql/data
+      - ${CODE_ROOT}/ugonline-migrations/init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    env_file:
+      - ${CODE_ROOT}/ugonline-migrations/.env
+    networks:
+      dev-ugonline:
+
+  migrator:
+    image: govnetservices/ugonline-migrator:latest
+
+  auth:
+    image: govnetservices/ugonline-auth-api:0be11cb1ab89e7c8d7eb4f5a8664468eb2e0ff25
+
+  notifier:
+    image: govnetservices/ugonline-notification-service:a7b932173f21f50592a6d5111dde2f2c106ebdf9
+
+  provider:
+    image: govnetservices/ugonline-provider-api:e7231c37b94364711c9f815d5555fdb13b3d0f15
+
+  registry:
+    image: govnetservices/ugonline-registry-api:3e30d48b9e1122ec69b439a140a33397ad763a20
+
+  gateway:
+    image: govnetservices/ugonline-gateway-service:42e2cdca5675756a550c7c2682c84fffd47b6498
+
+  admin-portal:
+    image: govnetservices/ugonline-admin-portal:13502e90c1c5a7ad65b130b82136d320bfc9cd7f
+
+  user-portal:
+    image: govnetservices/ugonline-user-portal:8f87ab2a0dff95a6d9cc58b37b3e13b19e47410d
+
+  eposta-admin-portal:
+    image: govnetservices/eposta-eservices-admin-portal:eeb32e3b99a6488c182ed260f8e030a6777f04a6
+
+  eposta-user-portal:
+    image: govnetservices/eposta-eservices-user-portal:299f209107e33924c76da551c86d620cb6ba91db

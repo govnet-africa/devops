@@ -1,0 +1,6 @@
+.env
+docker-compose.override.yaml
+data/migrations/*.sql
+ugo/docker-compose.override.yaml
+infra/docker-compose.override.yaml
+*.env

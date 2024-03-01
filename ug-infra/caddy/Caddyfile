@@ -1,0 +1,128 @@
+{
+  servers {
+    metrics
+  }
+  admin 0.0.0.0:2019
+  local_certs
+}
+
+pods.dev.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy https://portainer:9443 {
+    transport http {
+      #tls_server_name localhost
+      tls
+      tls_insecure_skip_verify
+    }
+  }
+}
+
+consul.dev.{$UG_ONLINE_DOMAIN} {
+  encode zstd gzip
+  # basicauth / {
+  #   sagas $2a$14$MOv8v.FT2DUdUPqkFOaiyOo2a.kb/kabawH6gjKF2JrxG4q7VpQee
+  #   nitadev $2a$14$.dXaJlRwikIROoMnMQSaAONVN6v8gJxQUJqq1rSA1S6S0FyBo1aA2
+  # }
+  reverse_proxy http://consul:8500
+}
+
+rabbitmq.dev.{$UG_ONLINE_DOMAIN} rmq.dev.{$UG_ONLINE_DOMAIN} {
+  encode zstd gzip
+  reverse_proxy http://rabbitmq:15672
+}
+
+ntop.dev.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://192.168.151.146:3000
+}
+
+up.dev.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://uptime-kuma:3001
+}
+
+docker.dev.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://dockge:5001
+}
+
+redis.dev.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://redis-ui:8001
+}
+
+api.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  respond / 200 {
+    body "Looks like you're lost, but we're in this together 😊"
+    close
+  }
+
+  handle_path /notify/* {
+    reverse_proxy http://notifier:80
+  }
+
+  handle_path /auth/* {
+    reverse_proxy http://auth:80
+  }
+
+  handle_path /providers/* {
+    reverse_proxy http://provider:80
+  }
+
+  handle_path /registry/* {
+    reverse_proxy http://registry:80
+  }
+
+  handle_path /gateway/* {
+    reverse_proxy http://gateway:80
+  }
+}
+
+api.auth.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://auth:80
+}
+
+api.providers.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://provider:80
+}
+
+api.registry.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://registry:80
+}
+
+admin.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://admin-portal:80
+}
+
+{$UG_ONLINE_DOMAIN} users.{$UG_ONLINE_DOMAIN} citizen.{$UG_ONLINE_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://user-portal:80
+}
+
+{$EPOSTA_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://eposta-user-portal:80
+}
+
+backoffice.{$EPOSTA_DOMAIN} {
+  log
+  encode zstd gzip
+  reverse_proxy http://eposta-admin-portal:80
+}

@@ -1,0 +1,116 @@
+version: '3'
+
+networks:
+  dev-ugonline:
+    external: true
+
+services:
+
+  migrator:
+    container_name: ${PROJECT}-migrator
+    image: govnetservices/ugonline-migrator:latest
+    volumes:
+      - ./data/migrations:/app/scripts:ro
+    networks:
+      dev-ugonline:
+    env_file:
+      - ./config/.env
+      - ./config/pgdb.env
+
+  notifier:
+    container_name: ${PROJECT}-notifier
+    image: govnetservices/ugonline-notification-service:latest
+    networks:
+      dev-ugonline:
+    env_file:
+      - ./config/.env
+      - ./config/pgdb.env
+      - ./config/consul.env
+      - ./config/minio.env
+      - ./config/rabbitmq.env
+      - ./config/notifier.env
+
+  auth:
+    container_name: ${PROJECT}-auth
+    image: govnetservices/ugonline-auth-api:latest
+    networks:
+      dev-ugonline:
+    env_file:
+      - ./config/.env
+      - ./config/pgdb.env
+      - ./config/consul.env
+      - ./config/minio.env
+      - ./config/rabbitmq.env
+      - ./config/auth.env
+
+  provider:
+    container_name: ${PROJECT}-provider
+    image: govnetservices/ugonline-provider-api:latest
+    networks:
+      dev-ugonline:
+    env_file:
+      - ./config/.env
+      - ./config/consul.env
+      - ./config/pgdb.env
+      - ./config/minio.env
+      - ./config/rabbitmq.env
+      - ./config/provider.env
+
+  registry:
+    container_name: ${PROJECT}-registry
+    image: govnetservices/ugonline-registry-api:latest
+    networks:
+      dev-ugonline:
+    env_file:
+      - ./config/.env
+      - ./config/consul.env
+      - ./config/pgdb.env
+      - ./config/minio.env
+      - ./config/rabbitmq.env
+      - ./config/registry.env
+
+  gateway:
+    container_name: ${PROJECT}-gateway
+    image: govnetservices/ugonline-gateway-service:latest
+    networks:
+      dev-ugonline:
+    env_file:
+      - ./config/.env
+      - ./config/consul.env
+      - ./config/pgdb.env
+      - ./config/minio.env
+      - ./config/rabbitmq.env
+      - ./config/gateway.env
+
+  admin-portal:
+    container_name: ${PROJECT}-admin-portal
+    image: govnetservices/ugonline-admin-portal:latest
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      dev-ugonline:
+
+  user-portal:
+    container_name: ${PROJECT}-user-portal
+    image: govnetservices/ugonline-user-portal:latest
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      dev-ugonline:
+
+  eposta-admin-portal:
+    container_name: eposta-admin-portal
+    image: govnetservices/eposta-eservices-admin-portal:develop
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      dev-ugonline:
+
+  eposta-user-portal:
+    container_name: eposta-user-portal
+    image: govnetservices/eposta-eservices-user-portal:develop
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      dev-ugonline:
+  

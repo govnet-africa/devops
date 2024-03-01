@@ -1,0 +1,123 @@
+version: '3'
+
+services:
+
+  consul:
+    image: hashicorp/consul:latest
+    container_name: ${PROJECT}-consul
+    restart: unless-stopped
+    networks:
+      dev-ugonline:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ${PROJECT}-rabbit-mq
+    restart: unless-stopped
+    env_file:
+      - ./rabbitmq/.env
+    volumes:
+      - ./rabbitmq/plugins:/etc/rabbitmq/enabled_plugins
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
+      - ./rabbitmq/ugonline.conf:/etc/rabbitmq/rabbitmq.conf
+    networks:
+      dev-ugonline:
+
+  redis:
+    image: redis/redis-stack:latest
+    container_name: ${PROJECT}-redis
+    restart: unless-stopped
+    # ports:
+    #   - '6479:6379'
+    volumes:
+      - redis_data:/data
+      # - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      dev-ugonline:
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    environment:
+      - VIRTUAL_HOST=pods.ugonline.go.ug
+      - VIRTUAL_PORT=9000
+    volumes:
+      - portainer_data:/data # admin/xE+(?K}5YD,QUbt-zMy)RLF=8~TVm<_4
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      dev-ugonline:
+
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    env_file: ./caddy/.env
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      dev-ugonline:
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly
+    # network_mode: host
+    # ulimits:
+    #   memlock: -1
+    volumes:
+      - dragonflydata:/data
+    networks:
+      dev-ugonline:
+
+  redis-ui:
+    image: redis/redis-stack:latest
+    restart: unless-stopped
+    volumes:
+      - redisinsight:/db
+    environment:
+      - RITRUSTEDORIGINS=https://redis.dev.ugonline.go.ug # This is the proxy origin from browser
+    networks:
+      dev-ugonline:
+  
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    volumes:
+      - uptime-kuma:/app/data
+    networks:
+      dev-ugonline:
+
+  dockge:
+    image: louislam/dockge:1
+    restart: unless-stopped
+    # ports:
+      # Host Port : Container Port
+      # - 5001:5001
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dockge:/app/data
+        
+      # If you want to use private registries, you need to share the auth file with Dockge:
+      # - /root/.docker/:/root/.docker
+
+      # Stacks Directory
+      # ⚠️ READ IT CAREFULLY. If you did it wrong, your data could end up writing into a WRONG PATH.
+      # ⚠️ 1. FULL path only. No relative path (MUST)
+      # ⚠️ 2. Left Stacks Path === Right Stacks Path (MUST)
+      - /deploy:/opt/stacks
+    environment:
+      # Tell Dockge where is your stacks directory
+      - DOCKGE_STACKS_DIR=/opt/stacks
+    networks:
+      dev-ugonline:
+
+networks:
+  dev-ugonline:
+    external: true
+
+volumes:
+  caddy_data:
+  redis_data:
+  caddy_config:
+  portainer_data:
+  uptime-kuma:
+  redisinsight:
+  dragonflydata:

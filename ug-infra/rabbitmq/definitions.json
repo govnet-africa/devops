@@ -1,0 +1,123 @@
+{
+  "rabbit_version": "3.12.10",
+  "rabbitmq_version": "3.12.10",
+  "product_name": "RabbitMQ",
+  "product_version": "3.12.10",
+  "users": [
+    {
+      "name": "notifier",
+      "password_hash": "NLkuClMBtG9gj45UQMnDWwzDIbdM9FzZEOgNHV6ByxWaG404",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [
+        "administrator"
+      ],
+      "limits": {}
+    },
+    {
+      "name": "ugonline-dev",
+      "password_hash": "2SWSWex3qGLeu8ZHW0jpHBc2J7ACAvGIVniJkelMTxZ+y/Ke",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [
+        "administrator"
+      ],
+      "limits": {}
+    },
+    {
+      "name": "guest",
+      "password_hash": "XAObP74qffYAYJAwPlPHf7NqKz0CXUlldu3l3GIyofQS3nRw",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [
+        "administrator"
+      ],
+      "limits": {}
+    },
+    {
+      "name": "auther",
+      "password_hash": "F+9K3zuXfg2uWr4SmvGetpI/R+Aemnoqz+9wQRjrdUQiTQfr",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [
+        "administrator"
+      ],
+      "limits": {}
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "notifier",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "ugonline-dev",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "auther",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "topic_permissions": [
+    {
+      "user": "notifier",
+      "vhost": "/",
+      "exchange": "",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "ugonline-dev",
+      "vhost": "/",
+      "exchange": "",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "auther",
+      "vhost": "/",
+      "exchange": "",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "global_parameters": [
+    {
+      "name": "internal_cluster_id",
+      "value": "rabbitmq-cluster-id-Qysl7n2mLR5sgiXNmHavGQ"
+    }
+  ],
+  "policies": [],
+  "queues": [],
+  "exchanges": [
+    {
+      "name": "notify",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": []
+}
