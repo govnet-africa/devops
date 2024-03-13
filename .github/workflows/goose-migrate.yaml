@@ -1,0 +1,76 @@
+name: Migrator 
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to run migrations on"
+        required: true
+        default: "develop"
+        type: choice
+        options:
+          - develop
+      cmd:
+        description: 'Migrate command to execute'
+        required: true
+        default: 'up'
+        type: choice
+        options:
+          - up
+          - up-to
+          - down
+          - down-to
+      until:
+        description: 'Migrate up/down until'
+        required: false
+        type: number
+      migrator-version:
+        description: 'version of Runner Image to use'
+        required: true
+        default: 'latest'
+        type: string
+  workflow_call: 
+    secrets:
+      deploy-ssh-private-key:
+        required: true
+jobs:
+  develop-scripts:
+    if: ${{ inputs.environment == 'develop' }}
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: read
+    env:
+      SERVICE: ${{ vars.SERVICE }}.govnet
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Host SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          name: govnet_github
+          known_hosts: ssh-ed25519 xxx <- will be replaced
+          config: |
+            Host ${{ env.SERVICE }}
+              HostName ${{ vars.DEV_HOST_IP }}
+              User ${{ vars.DEV_HOST_USER }}
+              Port ${{ vars.DEV_HOST_PORT }}
+              IdentityFile ~/.ssh/govnet_github
+              ForwardAgent yes
+          key: ${{ secrets.deploy-ssh-private-key }}
+      - name: Overwrite known hosts of ${{ env.SERVICE }}
+        run: ssh-keyscan -p ${{vars.DEV_HOST_PORT }} ${{ vars.DEV_HOST_IP }} > ~/.ssh/known_hosts
+      - name: Sync Migration files ${{ env.SERVICE }}
+        run: rsync --progress ./migrations/scripts/*/*.sql ${{ env.SERVICE }}:${{ vars.DEV_SQL_SCRIPTS_DIR }} 
+      - name: Migration status
+        run: ssh ${{ env.SERVICE }} "make -C ${{ vars.DEV_DEPLOY_DIR }} migration cmd=migration-status"
+      - name: "${{ vars.SERVICE }}: up"
+        if: ${{ inputs.cmd == 'up' }}
+        run: ssh ${{ env.SERVICE }} "make -C ${{ vars.DEV_DEPLOY_DIR }} ci-migration cmd=migrate-up tag=${{ inputs.migrator-version }}"
+      - name: "${{ vars.SERVICE }}: up-to ${{ inputs.until }}"
+        if: ${{ inputs.cmd == 'up-to' && inputs.until > 20230815233650 }}
+        run: ssh ${{ env.SERVICE }} "make -C ${{ vars.DEV_DEPLOY_DIR }} ci-migration cmd='migrate-up-to until=${{ inputs.until }}' tag=${{ inputs.migrator-version }}"
+      - name: "${{ vars.SERVICE }}: down"
+        if: ${{ inputs.cmd == 'down' }}
+        run: ssh ${{ env.SERVICE }} "make -C ${{ vars.DEV_DEPLOY_DIR }} ci-migration cmd=migrate-down tag=${{ inputs.migrator-version }}"
+      - name: "${{ vars.SERVICE }}: down-to ${{ inputs.until }}"
+        if: ${{ inputs.cmd == 'down-to' && inputs.until > 20230815233650 }}
+        run: ssh ${{ env.SERVICE }} "make -C ${{ vars.DEV_DEPLOY_DIR }} ci-migration cmd='migrate-down-to until=${{ inputs.until }}' tag=${{ inputs.migrator-version }}"

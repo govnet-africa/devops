@@ -1,0 +1,62 @@
+name: Goose (Tests)
+on:
+  push:
+  workflow_dispatch: 
+  workflow_call:
+jobs:
+  goose-test:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    services:
+      postgres:
+        image: postgres:${{ vars.GOOSE_POSTGRES_VERSION || 16 }}
+        env:
+          POSTGRES_USER: ${{ vars.GOOSE_DB_USERNAME || 'govnet' }}
+          POSTGRES_PASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
+          POSTGRES_DB: ${{ vars.GOOSE_DB_NAME || 'govnet' }}
+        ports:
+          - ${{ vars.GOOSE_DB_PORT }}:5432
+    env:
+      GOVNET_DB_HOST: ${{ vars.GOOSE_DB_HOST || '127.0.0.1' }}
+      GOVNET_DB_DRIVER: ${{ vars.GOOSE_DB_DRIVER || 'postgres' }}
+      GOVNET_DB_DATABASE: ${{ vars.GOOSE_DB_NAME || 'govnet' }}
+      GOVNET_DB_USERNAME: ${{ vars.GOOSE_DB_USERNAME || 'govnet' }}
+      GOVNET_DB_PASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
+      GOVNET_DB_PORT: ${{ vars.GOOSE_DB_PORT || 5432 }}
+      PGPASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
+      GO_CACHE_KEY: go-home-${{ vars.GO_VERSION || 1.22 }}
+      GO_CACHE_DIR: /home/runner/go/
+    steps:
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ vars.GO_VERSION || 1.22  }}
+      - name: Restore Go Dependencies
+        id: restore-go-mod
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{env.GO_CACHE_KEY }}
+          path: ${{ env.GO_CACHE_DIR }}
+      - if: steps.restore-go-mod.outputs.cache-hit != 'true'
+        run: |
+          go install github.com/pressly/goose/v3/cmd/goose@latest
+          goose -version
+      - uses: sqlc-dev/setup-sqlc@v4
+        with:
+          sqlc-version: ${{ vars.SQLC_VERSION || '1.25.0'  }}
+      - uses: actions/checkout@v4
+      - run: sqlc generate
+      - run: go test ./...
+      - name: Save Go Dependencies
+        uses: actions/cache/save@v4
+        if: steps.restore-go-mod.outputs.cache-hit != 'true'
+        with:
+          key: ${{ env.GO_CACHE_KEY }}
+          path: ${{ env.GO_CACHE_DIR }}
+      - name: Install Postgres Extensions
+        run: |
+          echo 'create extension if not exists "uuid-ossp"' | psql -h ${{ vars.GOOSE_DB_HOST }} -U ${{ vars.GOOSE_DB_USERNAME }} -d ${{ vars.GOOSE_DB_NAME }}
+          echo 'create extension if not exists "moddatetime"' | psql -h ${{ vars.GOOSE_DB_HOST }} -U ${{ vars.GOOSE_DB_USERNAME }} -d ${{ vars.GOOSE_DB_NAME }}
+      - run: make migrate-up
+      - run: make migrate-reset
