@@ -56,7 +56,7 @@ jobs:
           path: ${{ env.GO_CACHE_DIR }}
       - name: Install Postgres Extensions
         run: |
-          echo 'create extension if not exists "uuid-ossp"' | psql -h ${{ vars.GOOSE_DB_HOST || '127.0.0.1' }} -U ${{ vars.GOOSE_DB_USERNAME || 'govnet' }} -d ${{ vars.GOOSE_DB_NAME || 'govnet' }}
-          echo 'create extension if not exists "moddatetime"' | psql -h ${{ vars.GOOSE_DB_HOST || '127.0.0.1' }} -U ${{ vars.GOOSE_DB_USERNAME || 'govnet' }} -d ${{ vars.GOOSE_DB_NAME || 'govnet' }}
+          echo 'create extension if not exists "uuid-ossp"' | psql -h ${{ env.GOVNET_DB_HOST }} -U ${{ env.GOVNET_DB_USERNAME }} -d ${{ env.GOVNET_DB_DATABASE }}
+          echo 'create extension if not exists "moddatetime"' | psql -h ${{ env.GOVNET_DB_HOST }} -U ${{ env.GOVNET_DB_USERNAME }} -d ${{ env.GOVNET_DB_DATABASE }}
       - run: make migrate-up
       - run: make migrate-reset
