@@ -17,7 +17,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
           POSTGRES_DB: ${{ vars.GOOSE_DB_NAME || 'govnet' }}
         ports:
-          - ${{ vars.GOOSE_DB_PORT }}:5432
+          - ${{ vars.GOOSE_DB_PORT || 5432 }}:5432
     env:
       GOVNET_DB_HOST: ${{ vars.GOOSE_DB_HOST || '127.0.0.1' }}
       GOVNET_DB_DRIVER: ${{ vars.GOOSE_DB_DRIVER || 'postgres' }}
