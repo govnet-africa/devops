@@ -1,3 +1,3 @@
-# Ecitizen devops
+# africa devops
 
-This repo manages core aspects of deployment of Ecitizen
+This repo manages core aspects of deployment of africa

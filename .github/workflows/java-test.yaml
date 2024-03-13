@@ -1,6 +1,5 @@
 name: Java Tests
-env:
-  GOPRIVATE: "github.com/govnet-ecitizen"
+
 on: 
   workflow_call:
     inputs:
@@ -16,14 +15,11 @@ on:
         required: false
         type: string
         default: 'maven'
-      mvn-user:
-        required: false
-        type: string
-        default: 'ronaldkasagga'
+    secrets: 
       mvn-token:
-        required: false
-        type: string
-        default: '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'
+        required: true
+      mvn-user:
+        required: true
 jobs:
   java-test:
     runs-on: ubuntu-latest
@@ -31,16 +27,16 @@ jobs:
       id-token: write
       contents: read
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup JDK ${{ inputs.java-version }}
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
         cache: ${{ inputs.jre-cache }}
     - name: Set up Maven settings.xml
       run: |
-        cat <<EOF > ~/.m2/settings.xml
+        cat <<EOF > ~/.m2/settings.xml 
         <?xml version="1.0" encoding="UTF-8"?>
         <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -58,7 +54,7 @@ jobs:
                     </repository>
                     <repository>
                       <id>govpay</id>
-                      <url>https://maven.pkg.github.com/govnet-ecitizen/govpay</url>
+                      <url>https://maven.pkg.github.com/govnet-africa/govpay</url>
                       <snapshots>
                           <enabled>true</enabled>
                       </snapshots>
@@ -77,13 +73,13 @@ jobs:
           <servers>
               <server>
                 <id>govpay</id>
-                <username>${{ inputs.mvn-user }}</username>
-                <password>${{ inputs.mvn-token }}</password>
+                <username>${{ secrets.mvn-user }}</username>
+                <password>${{ secrets.mvn-token }}</password>
               </server>
               <server>
                 <id>govnet</id>
-                <username>${{ inputs.mvn-user }}</username>
-                <password>${{ inputs.mvn-token }}</password>
+                <username>${{ secrets.mvn-user }}</username>
+                <password>${{ secrets.mvn-token }}</password>
               </server>
           </servers>
         </settings>

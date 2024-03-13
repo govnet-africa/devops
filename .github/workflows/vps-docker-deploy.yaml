@@ -14,15 +14,13 @@ on:
       deploy-host:
         required: false
         type: string
-        default: "${{ inputs.service }}.ugonline"
+        default: "${{ inputs.service }}.govnet"
       deploy-host-ip:
-        required: false
+        required: true
         type: string
-        default: '212.71.251.167'
       deploy-host-port:
-        required: false
+        required: true
         type: number
-        default: 57243
       deploy-user:
         required: false
         type: string
@@ -30,9 +28,12 @@ on:
       deploy-dir:
         required: false
         type: string
-        default: '/deploy/ugo'
+        default: '/deploy/govnet'
+    secrets:
+      deploy-ssh-private-key:
+        required: true
 jobs:
-  docker_deploy:
+  docker-compose:
     runs-on: ubuntu-latest
     permissions: 
       id-token: write
@@ -41,23 +42,17 @@ jobs:
       - name: Configure Host SSH
         uses: shimataro/ssh-key-action@v2
         with:
-          name: govpay_github
-          known_hosts: |
-            ${{ inputs.deploy-host-ip }} ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGPc7a8RAUbmZ7c7eCV7DdYN3+o9xvvXNuFGeVakowwm
+          name: govnet_github
+          known_hosts: replace-me
           config: |
             Host ${{ inputs.deploy-host }}
               HostName ${{ inputs.deploy-host-ip }}
               User ${{ inputs.deploy-user }}
-              IdentityFile ~/.ssh/govpay_github
-          key: |
-            -----BEGIN OPENSSH PRIVATE KEY-----
-            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-            QyNTUxOQAAACBl3UGd/fLBOnGAskrzY6HNHuIIsS64C1mzs35t7H/3/AAAAKAQwNAOEMDQ
-            DgAAAAtzc2gtZWQyNTUxOQAAACBl3UGd/fLBOnGAskrzY6HNHuIIsS64C1mzs35t7H/3/A
-            AAAEBQf4yCwL3h13igdHYV37DApfXn5QlEmIKaz6r+5AcSYmXdQZ398sE6cYCySvNjoc0e
-            4gixLrgLWbOzfm3sf/f8AAAAHGdpdGh1Yi1hY3Rpb25zQGdvdnBheS5nb3ZuZXQB
-            -----END OPENSSH PRIVATE KEY-----
+              Port ${{ inputs.deploy-host-port }}
+              IdentityFile ~/.ssh/govnet_github
+              ForwardAgent yes
+          key: ${{ secrets.deploy-ssh-private-key }}
       - name: Overwrite known hosts of ${{ inputs.deploy-host }}
-        run: ssh-keyscan ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
+        run: ssh-keyscan -p ${{inputs.deploy-host-port}} ${{ inputs.deploy-host-ip }} > ~/.ssh/known_hosts
       - name: Deploy ${{ inputs.service }} with docker
-        run: ssh ${{ inputs.deploy-host }} "make -C  ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
+        run: ssh ${{ inputs.deploy-host }} "make -C ${{ inputs.deploy-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"

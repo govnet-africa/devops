@@ -13,53 +13,50 @@ on:
         required: false
         type: number
       deploy-host-ip:
-        required: false
+        required: true
         type: string
-        default: '212.71.251.167'
       deploy-host-port:
-        required: false
+        required: true
         type: number
-        default: 57243
+      deploy-dir:
+        required: true
+        type: string
       go-version:
         required: false
         type: string
-      dockerhub-org:
-        required: false
-        type: string
-      dockerhub-repo:
-        required: false
-        type: string
-        default: ${{inputs.service}}
+    secrets:
       gomod-token:
-        required: false
-        type: string
+        required: true
       git-user:
-        type: string
-        required: false
+        required: true
+      deploy-ssh-private-key:
+        required: true  
 jobs:
   build:
-    uses: govnet-ecitizen/devops/.github/workflows/go-build.yaml@main
+    uses: govnet-africa/devops/.github/workflows/go-build.yaml@v3
     with:
       service: ${{ inputs.service }}
       version: ${{ inputs.version }}
       service-port: ${{ inputs.service-port || 80 }}
-      go-version: ${{ inputs.go-version || '1.21' }}
-      dockerhub-org: ${{ inputs.dockerhub-org || 'govnetservices' }}
-      dockerhub-repo: ${{ inputs.dockerhub-repo || inputs.service }}
-      gomod-token: ${{ inputs.gomod-token || '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' }}
-      git-user: ${{ inputs.git-user || 'ronaldkasagga' }}
+      go-version: ${{ inputs.go-version || '1.22' }}
+    secrets:  
+      gomod-token: ${{ secrets.gomod-token }}
+      git-user: ${{ secrets.git-user }}
     permissions:
       id-token: write
       contents: read
   deploy:
     needs: build
-    uses: govnet-ecitizen/devops/.github/workflows/vps-docker-deploy.yaml@main
+    uses: govnet-africa/devops/.github/workflows/vps-docker-deploy.yaml@v3
     with:
       service: ${{ inputs.service }}
-      deploy-host: "${{ inputs.service }}.ugonline"
+      deploy-host: "${{ inputs.service }}.govnet"
       deploy-host-ip: ${{ inputs.deploy-host-ip }}
       deploy-host-port: ${{ inputs.deploy-host-port }}
+      deploy-dir: ${{ inputs.deploy-dir }}
       tag: ${{ inputs.version || github.sha }}
+    secrets:
+       deploy-ssh-private-key: ${{ secrets.deploy-ssh-private-key }}
     permissions:
       id-token: write
       contents: read

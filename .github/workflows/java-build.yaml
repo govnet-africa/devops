@@ -1,6 +1,6 @@
 env:
   DOCKERFILE_BUILDER_IMG: eclipse-temurin:${{ inputs.java-version }}-jdk
-  DOCKERHUB_REPO: ${{ inputs.dockerhub-org }}/${{ github.repository }}
+  DOCKERHUB_REPO: ${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
   DOCKER_BUILDKIT: 1
 on:
   workflow_call:
@@ -21,12 +21,6 @@ on:
         required: false
         type: string
         default: 'maven'
-      mvn-user:
-        required: true
-        type: string
-      mvn-token:
-        required: true
-        type: string
       service:
         required: true
         type: string
@@ -34,14 +28,6 @@ on:
         required: false
         type: number
         default: 8080
-      dockerhub-org:
-        required: false
-        type: string
-        default: 'govnetservices'
-      dockerhub-repo:
-        required: false
-        type: string
-        default: ${{inputs.service}}
       dockerfile-runner-img:
         required: false
         type: string
@@ -52,6 +38,11 @@ on:
       consul-port:
         required: true
         type: number
+    secrets: 
+      mvn-token:
+        required: true
+      mvn-user:
+        required: true
 jobs:
   java-build:
     runs-on: ubuntu-latest
@@ -59,20 +50,20 @@ jobs:
       id-token: write
       contents: read
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set env
       run: |
         echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
         echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
-        echo "DOCKERHUB_REPO=${{ inputs.dockerhub-org }}/$(echo ${{ github.repository }} | cut -d '/' -f 2)" >> $GITHUB_ENV
+        echo "DOCKERHUB_REPO=${{ vars.DOCKERHUB_ORG }}/$(echo ${{ vars.DOCKERHUB_REPO }} | cut -d '/' -f 2)" >> $GITHUB_ENV
         echo "SERVICE_BUILD=`date -I`-`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
     - name: Login to Docker Hub
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
-        username: govnetservices
-        password: 'dckr_pat_TLq0t2oN4tqcYXtMXghD_sozOog'
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PAT }} 
     - name: Setup JDK ${{ inputs.java-version }}
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
@@ -97,7 +88,7 @@ jobs:
                     </repository>
                     <repository>
                       <id>govpay</id>
-                      <url>https://maven.pkg.github.com/govnet-ecitizen/govpay</url>
+                      <url>https://maven.pkg.github.com/govnet-africa/govpay</url>
                       <snapshots>
                           <enabled>true</enabled>
                       </snapshots>
@@ -116,13 +107,13 @@ jobs:
           <servers>
               <server>
                 <id>govpay</id>
-                <username>${{ inputs.mvn-user }}</username>
-                <password>${{ inputs.mvn-token }}</password>
+                <username>${{ secrets.mvn-user }}</username>
+                <password>${{ secrets.mvn-token }}</password>
               </server>
               <server>
                 <id>govnet</id>
-                <username>${{ inputs.mvn-user }}</username>
-                <password>${{ inputs.mvn-token }}</password>
+                <username>${{ secrets.mvn-user }}</username>
+                <password>${{ secrets.mvn-token }}</password>
               </server>
           </servers>
         </settings>
@@ -173,7 +164,7 @@ jobs:
       run: |
         echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
     - name: Build and push docker image
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v5
       with:
         context: .
         push: true

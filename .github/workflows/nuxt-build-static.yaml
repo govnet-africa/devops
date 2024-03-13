@@ -1,0 +1,104 @@
+
+env:
+  ARTIFACT_DIR: .out/build/${{ inputs.environment }}
+  DOCKER_FILE: .out/build/${{ inputs.environment }}/Dockerfile
+  ENV_FILE: .out/build/${{ inputs.environment }}/.ENV
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: true
+        type: string
+      artifact-key:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+        default: ${{ vars.DEFAULT_ENV }}
+      service:
+        required: true
+        type: string
+      service-port:
+        required: false
+        type: number
+        default: 80
+      registration-url:
+        required: true
+        type: string
+      api_base-url:
+        required: true
+        type: string
+      auth-base-url:
+        required: true
+        type: string
+      auth-client-id:
+        required: true
+        type: string
+      auth-client-secret:
+        required: false
+        type: string
+        default: ''
+      auth-redirect-url:
+        required: true
+        type: string
+    secrets:
+      git-token:
+        required: true
+      git-user:
+        required: true
+jobs:
+  nuxt_build_static:
+    runs-on: ${{ vars.DEV_JOB_RUNNER }}
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      REGISTRATION_URL: ${{ inputs.registration-url }}
+      API_BASE_URL: ${{ inputs.api_base-url }}
+      AUTH_BASE_URL: ${{ inputs.auth-base-url }}
+      AUTH_CLIENT: ${{ inputs.auth-client-id }}
+      AUTH_REDIRECT_URI: ${{ inputs.auth-redirect-url }}
+      APP_VERSION: ${{ github.sha }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+    - name: Prepare ${{ inputs.service }} artifact outputs
+      run: | 
+        mkdir -p ${{ env.ARTIFACT_DIR }}
+        cp -r nginx ${{ env.ARTIFACT_DIR }}
+    - name: Download ${{ inputs.service }} dependencies
+      run: npm i
+    - name: Write dockerfile
+      run: |
+        cat <<EOF > ${{ env.DOCKER_FILE }} 
+        FROM nginx:stable-alpine
+        COPY public/ /usr/share/nginx/html
+        COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+        ENV VERSION=${{ github.sha }}
+        EXPOSE ${{ inputs.service-port }}
+        CMD ["nginx", "-g", "daemon off;"]
+        EOF
+    - name: Write .env file
+      run: |
+        cat <<EOF > ${{ env.ENV_FILE }} 
+        REGISTRATION_URL=${{ inputs.registration-url }}
+        API_BASE_URL=${{ inputs.api_base-url }}
+        AUTH_BASE_URL=${{ inputs.auth-base-url }}
+        AUTH_CLIENT=${{ inputs.auth-client-id }}
+        AUTH_REDIRECT_URI=${{ inputs.auth-redirect-url }}
+        APP_VERSION=${{ github.sha }}
+        EOF
+    - name: Build ${{ inputs.service }} 
+      run: |
+        npm run generate --fail-on-error 
+        cp -r .output/public ${{ env.ARTIFACT_DIR }}
+    - name: Archive build binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.artifact-key }}
+        path: ${{ env.ARTIFACT_DIR }}
+        retention-days: 5
