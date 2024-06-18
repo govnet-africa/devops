@@ -9,7 +9,7 @@ on:
         type: string
         default: '1.22.0'
     secrets: 
-      gomod-token:
+      git-token:
         required: true
       git-user:
         required: true
@@ -23,7 +23,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
-        token: ${{ secrets.gomod-token }}
+        token: ${{ secrets.git-token }}
         go-version: ${{ inputs.version }}
         cache: true
     - name: Configure Netrc
@@ -31,7 +31,7 @@ jobs:
       with:
         machine: github.com
         username: ${{ secrets.git-user }}
-        password: ${{ secrets.gomod-token }}    
+        password: ${{ secrets.git-token }}    
     - name: Download dependencies
       run: go mod download
     - name: Run tests
