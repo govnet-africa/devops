@@ -22,6 +22,9 @@ on:
         required: false
         type: number
         default: 80
+      main-file:
+        type: string
+        default: ./main.go
     secrets: 
       gomod-token:
         required: true
@@ -70,7 +73,7 @@ jobs:
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
           go build \
           -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ env.SERVICE_BUILD }} -X main.SHA=${{ github.sha }}" \
-          -o ${{ env.OUTPUT_BIN }}
+          -o ${{ env.OUTPUT_BIN }} ${{ inputs.main-file }}
     - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
@@ -94,6 +97,8 @@ jobs:
         push: true
         tags: |
           ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
+          ${{ env.DOCKERHUB_REPO }}:${{ inputs.version }}
           ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}
-          ${{ env.DOCKERHUB_REPO }}:${{ inputs.version || env.GITHUB_SHA_SHORT }}
+          ${{ env.DOCKERHUB_REPO }}:${{ env.SERVICE_BUILD }}
+          ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:latest

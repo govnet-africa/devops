@@ -33,7 +33,7 @@ on:
         required: true  
 jobs:
   build:
-    uses: govnet-africa/devops/.github/workflows/go-build.yaml@v3
+    uses: govnet-africa/devops/.github/workflows/go-build.yaml@v4
     with:
       service: ${{ inputs.service }}
       version: ${{ inputs.version }}
@@ -47,7 +47,7 @@ jobs:
       contents: read
   deploy:
     needs: build
-    uses: govnet-africa/devops/.github/workflows/vps-docker-deploy.yaml@v3
+    uses: govnet-africa/devops/.github/workflows/vps-docker-deploy.yaml@v4
     with:
       service: ${{ inputs.service }}
       deploy-host: "${{ inputs.service }}.govnet"
