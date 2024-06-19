@@ -2,7 +2,7 @@
 env:
   GOPRIVATE: "github.com/govnet-africa"
   OUTPUT_BIN: ${{ inputs.service }}-bin
-  DOCKERHUB_REPO: ${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
+  DOCKERHUB_REPO: govnetservices/${{ vars.DOCKERHUB_REPO }}
   DOCKERFILE_BUILDER_IMG: alpine
 on:
   workflow_call:
@@ -52,7 +52,6 @@ jobs:
       run: |
         echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
         echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
-        echo "DOCKERHUB_REPO=${{ vars.DOCKERHUB_ORG }}/$(echo ${{ vars.DOCKERHUB_REPO }} | cut -d '/' -f 2)" >> $GITHUB_ENV
         echo "SERVICE_BUILD=`date -I`-`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
         echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
     - name: Login to Docker Hub
