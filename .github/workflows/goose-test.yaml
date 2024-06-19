@@ -26,7 +26,7 @@ jobs:
       GOVNET_DB_PASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
       GOVNET_DB_PORT: ${{ vars.GOOSE_DB_PORT || 5432 }}
       PGPASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
-      GO_CACHE_KEY: go-home-${{ vars.GO_VERSION || 1.22 }}
+      GO_CACHE_KEY: go-home-goose-${{ vars.GO_VERSION || 1.22 }}
       GO_CACHE_DIR: /home/runner/go/
     steps:
       - uses: actions/setup-go@v5

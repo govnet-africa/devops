@@ -24,6 +24,9 @@ on:
       go-version:
         required: false
         type: string
+      main-file:
+        type: string
+        default: ./main.go
     secrets:
       git-token:
         required: true
@@ -31,6 +34,10 @@ on:
         required: true
       deploy-ssh-private-key:
         required: true  
+      dockerhub-token:
+        required: true
+      dockerhub-user:
+        required: true
 jobs:
   build:
     uses: govnet-africa/devops/.github/workflows/go-build.yaml@v4
@@ -42,6 +49,8 @@ jobs:
     secrets:  
       git-token: ${{ secrets.git-token }}
       git-user: ${{ secrets.git-user }}
+      dockerhub-token: ${{ secrets.docker-token }}
+      dockerhub-user: ${{ secrets.dockerhub-user }}
     permissions:
       id-token: write
       contents: read
