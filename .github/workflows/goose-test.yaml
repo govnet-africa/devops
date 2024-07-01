@@ -3,6 +3,11 @@ on:
   push:
   workflow_dispatch: 
   workflow_call:
+    secrets: 
+      git-token:
+        required: true
+      git-user:
+        required: true
 jobs:
   goose-test:
     runs-on: ubuntu-latest
@@ -32,12 +37,21 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ vars.GO_VERSION || 1.22  }}
+          token: ${{ secrets.git-token }}
+          cache: true
       - name: Restore Go Dependencies
         id: restore-go-mod
         uses: actions/cache/restore@v4
         with:
           key: ${{env.GO_CACHE_KEY }}
           path: ${{ env.GO_CACHE_DIR }}
+      
+      - name: Configure Netrc
+        uses: extractions/netrc@v2
+        with:
+          machine: github.com
+          username: ${{ secrets.git-user }}
+          password: ${{ secrets.git-token }}    
       - if: steps.restore-go-mod.outputs.cache-hit != 'true'
         run: |
           go install github.com/pressly/goose/v3/cmd/goose@latest
