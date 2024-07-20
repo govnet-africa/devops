@@ -103,6 +103,8 @@ jobs:
     - name: Download ${{ inputs.service }} dependencies
       run: go mod download
     - name: Build ${{ inputs.service }}
+      env:
+        BUILD_ENV: github
       run: |
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
           go build \
