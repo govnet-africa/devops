@@ -103,7 +103,7 @@ jobs:
         RUN apk add --no-cache ca-certificates tzdata
         WORKDIR /app
         COPY dist /app/dist
-        RUN ls /dist
+        RUN ls /app/dist
         FROM scratch
         WORKDIR /
         COPY ${{ env.OUTPUT_BIN }} .
