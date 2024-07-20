@@ -74,7 +74,7 @@ jobs:
       id: cache-npm-build
       uses: actions/cache@v4
       with:
-        key: go-vite-build-${{ github.sha }}
+        key: vite-build-${{ github.sha }}
         path: ./dist
     - name: prep directory for npm
       run: cp ${{ inputs.vue-dir }}/package*.json .
@@ -131,6 +131,7 @@ jobs:
           ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
           ${{ env.DOCKERHUB_REPO }}:${{ inputs.version }}
           ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}
+          ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}-${{ env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:${{ env.SERVICE_BUILD }}
           ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:latest
