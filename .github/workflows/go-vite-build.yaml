@@ -70,25 +70,18 @@ jobs:
       with:
         username: ${{ secrets.dockerhub-user }}
         password: ${{ secrets.dockerhub-token }} 
-    - name: Cache Build Output
-      id: cache-npm-build
-      uses: actions/cache@v4
-      with:
-        key: vite-build-${{ github.sha }}
-        path: ./dist
     - name: prep directory for npm
       run: cp ${{ inputs.vue-dir }}/package*.json .
     - uses: actions/setup-node@v4
-      if: steps.cache-npm-build.outputs.cache-hit != 'true'
       with:
         node-version: ${{ inputs.node-version }}
         cache: npm
     - name: Download ${{ inputs.service }} npm dependencies
-      if: steps.cache-npm-build.outputs.cache-hit != 'true'
       run: ls -lah && cd ./${{ inputs.vue-dir }} && npm i && cd ..
     - name: Build ${{ inputs.service }} npm dependencies
-      if: steps.cache-npm-build.outputs.cache-hit != 'true'
       run: cd ./${{ inputs.vue-dir }} && npm run build && mv dist .. && cd .. && ls -lah
+    - name: Show dist
+      run: ls -lah dist
     - name: Setup go ${{ inputs.go-version }}
       uses: actions/setup-go@v5
       with:
@@ -98,13 +91,11 @@ jobs:
     - name: Download ${{ inputs.service }} dependencies
       run: go mod download
     - name: Build ${{ inputs.service }}
-      env:
-        BUILD_ENV: github
       run: |
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
-          go build \
+          go build -a \
           -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ env.SERVICE_BUILD }} -X main.SHA=${{ github.sha }}" \
-          -o ${{ env.OUTPUT_BIN }} ${{ inputs.go-file }}
+          -installsuffix cgo -o ${{ env.OUTPUT_BIN }} ${{ inputs.go-file }}
     - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
