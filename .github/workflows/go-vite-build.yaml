@@ -104,7 +104,7 @@ jobs:
         # FROM scratch
         WORKDIR /app
         COPY dist /app/dist
-        COPY /app/${{ env.OUTPUT_BIN }} .
+        COPY ${{ env.OUTPUT_BIN }} /app
         # COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
         # COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
         ENV APP_HTTP_PORT=${{ inputs.service-port }}
