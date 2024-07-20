@@ -83,18 +83,12 @@ jobs:
       with:
         node-version: ${{ inputs.node-version }}
         cache: npm
-    - name: enter web dir
-      if: steps.cache-npm-build.outputs.cache-hit != 'true'
-      run: cd ./${{ inputs.vue-dir }}
     - name: Download ${{ inputs.service }} npm dependencies
       if: steps.cache-npm-build.outputs.cache-hit != 'true'
-      run: npm i
+      run: ls -lah && cd ./${{ inputs.vue-dir }} && npm i && cd ..
     - name: Build ${{ inputs.service }} npm dependencies
       if: steps.cache-npm-build.outputs.cache-hit != 'true'
-      run: npm run build && mv dist ..
-    - name: leave web dir
-      if: steps.cache-npm-build.outputs.cache-hit != 'true'
-      run: cd ..
+      run: cd ./${{ inputs.vue-dir }} && npm run build && mv dist .. && cd ..
     - name: Setup go ${{ inputs.go-version }}
       uses: actions/setup-go@v5
       with:
