@@ -22,7 +22,7 @@ on:
         required: false
         type: number
         default: 80
-      main-file:
+      go-file:
         type: string
         default: ./main.go
     secrets: 
@@ -72,7 +72,7 @@ jobs:
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
           go build \
           -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ env.SERVICE_BUILD }} -X main.SHA=${{ github.sha }}" \
-          -o ${{ env.OUTPUT_BIN }} ${{ inputs.main-file }}
+          -o ${{ env.OUTPUT_BIN }} ${{ inputs.go-file }}
     - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
