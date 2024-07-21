@@ -24,7 +24,7 @@ on:
       go-version:
         required: false
         type: string
-      main-file:
+      go-file:
         type: string
         default: ./main.go
     secrets:
