@@ -33,6 +33,7 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
           cache: npm
+          token: ${{ github.token }}
       - name: Download ${{ inputs.portal }} dependencies
         if: steps.cache-npm-build.outputs.cache-hit != 'true'
         run: npm i
