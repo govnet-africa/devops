@@ -38,6 +38,13 @@ jobs:
           cache: npm
           token: ${{ secrets.npm-token }}
       - name: Download ${{ inputs.portal }} dependencies
+        env: 
+          NPM_TOKEN: ${{ secrets.npm-token }}
+        if: ${{ env.NPM_TOKEN && env.NPM_TOKEN != '' }}
+        run: |
+          echo "${{ github.repository_owner }}:registry=https://npm.pkg.github.com" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.npm-token }}" >> .npmrc
+      - name: Download ${{ inputs.portal }} dependencies
         if: steps.cache-npm-build.outputs.cache-hit != 'true'
         run: npm i
       - name: Build ${{ inputs.portal }} dependencies
