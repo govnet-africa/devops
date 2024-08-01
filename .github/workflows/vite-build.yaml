@@ -37,7 +37,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: npm
           token: ${{ secrets.npm-token }}
-      - name: Download ${{ inputs.portal }} dependencies
+      - name: Authenticate ${{ github.repository_owner }} npm lib
         env: 
           NPM_TOKEN: ${{ secrets.npm-token }}
         if: ${{ env.NPM_TOKEN && env.NPM_TOKEN != '' }}
