@@ -1,0 +1,75 @@
+name: Deploy to docker host
+  
+on: 
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      tag:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+      jump-host-ip:
+        required: false
+        type: string
+        default: '4.5.6.7'
+      jump-host-port:
+        required: false
+        type: number
+        default: 22331
+      deploy-host:
+        required: false
+        type: string
+        default: "${{ inputs.service }}.govnet"
+      deploy-host-ip:
+        required: false
+        type: string
+        default: '0.1.2.3'
+      deploy-host-port:
+        required: false
+        type: number
+        default: 22222
+      deploy-user:
+        required: false
+        type: string
+        default: 'github-actions'
+      docker-dir:
+        required: false
+        type: string
+        default: '/opt/app'
+    secrets:
+      ssh-private-key:
+        required: true
+jobs:
+  docker_deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure Host SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          name: govnet_github
+          known_hosts: xxxx
+          config: |
+            Host jump-host
+              Port ${{ inputs.jump-host-port }}
+              HostName ${{ inputs.jump-host-ip }}
+              User ${{ inputs.deploy-user }}
+              IdentityFile ~/.ssh/govnet_github
+            Host ${{ inputs.deploy-host }}
+              HostName ${{ inputs.deploy-host-ip }}
+              User ${{ inputs.deploy-user }}
+              Port ${{ inputs.deploy-host-port }}
+              ProxyCommand ssh -q -W %h:%p jump-host
+              IdentityFile ~/.ssh/govnet_github
+          key: ${{ secrets.ssh-private-key }}
+      - name: Overwrite known hosts of ${{ inputs.deploy-host }}
+        run: |
+          ssh-keyscan -p ${{inputs.jump-host-port}} ${{ inputs.jump-host-ip }} >> ~/.ssh/known_hosts
+          ssh jump-host "ssh-keyscan -p ${{inputs.deploy-host-port}} ${{ inputs.deploy-host-ip }}" >> ~/.ssh/known_hosts
+      - name: Deploy ${{ inputs.service }} with docker
+        run: ssh ${{ inputs.deploy-host }} "make -C ${{ inputs.docker-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
