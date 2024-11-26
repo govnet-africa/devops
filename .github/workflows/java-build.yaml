@@ -132,6 +132,7 @@ jobs:
     - name: Write Dockerfile
       env:
         JRE_HOME: /opt/jre
+        DOCKERFILE_BUILDER_IMG: eclipse-temurin:${{ inputs.java-version }}-jdk
       run: |
         cat <<EOF > Dockerfile 
         FROM ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
