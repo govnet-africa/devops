@@ -70,6 +70,6 @@ jobs:
       - name: Overwrite known hosts of ${{ inputs.jump-host-ip }}
         run: ssh-keyscan -p ${{inputs.jump-host-port}} ${{ inputs.jump-host-ip }} > ~/.ssh/known_hosts
       - name: Overwrite known hosts of ${{ inputs.deploy-host-ip }}
-        run: ssh jump-host "ssh-keyscan -p ${{inputs.deploy-host-port}} ${{ inputs.deploy-host-ip }}" >> ~/.ssh/known_hosts
+        run: ssh -i ~/.ssh/govnet_github -p ${{inputs.jump-host-port}} ${{ inputs.deploy-user }}@${{ inputs.jump-host-ip }} "ssh-keyscan -p ${{inputs.deploy-host-port}} ${{ inputs.deploy-host-ip }}" >> ~/.ssh/known_hosts
       - name: Deploy ${{ inputs.service }} with docker
         run: ssh ${{ inputs.deploy-host }} "make -C ${{ inputs.docker-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
