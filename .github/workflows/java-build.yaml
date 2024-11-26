@@ -1,5 +1,5 @@
 env:
-  DOCKERFILE_BUILDER_IMG: eclipse-temurin:${{ inputs.java-version }}-jdk
+  DOCKERFILE_BUILDER_IMG: eclipse-${{ inputs.java-distribution }}:${{ inputs.java-version }}-jdk
   DOCKERHUB_REPO: ${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
   DOCKER_BUILDKIT: 1
 on:
@@ -16,7 +16,7 @@ on:
       java-distribution:
         required: false
         type: string
-        default: 'temurin'
+        default: '${{ inputs.java-distribution }}'
       jre-cache:
         required: false
         type: string
@@ -31,7 +31,7 @@ on:
       dockerfile-runner-img:
         required: false
         type: string
-        default: 'eclipse-temurin:${{ inputs.java-version }}-jre'
+        default: 'eclipse-${{ inputs.java-distribution }}:${{ inputs.java-version }}-jre'
       consul-host:
         required: true
         type: string
@@ -132,7 +132,8 @@ jobs:
     - name: Write Dockerfile
       env:
         JRE_HOME: /opt/jre
-        DOCKERFILE_BUILDER_IMG: eclipse-temurin:${{ inputs.java-version }}-jdk
+        DOCKERFILE_BUILDER_IMG: eclipse-${{ inputs.java-distribution }}:${{ inputs.java-version }}-jdk
+        DOCKERFILE_RUNNER_IMG: eclipse-${{ inputs.java-distribution }}:${{ inputs.java-version }}-jre
       run: |
         cat <<EOF > Dockerfile 
         FROM ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
@@ -149,7 +150,7 @@ jobs:
         USER app
         WORKDIR /app
         COPY target target
-        FROM ${{ inputs.dockerfile-runner-img }}
+        FROM ${{ env.DOCKERFILE_RUNNER_IMG }}
         VOLUME /tmp
         COPY --from=builder /app/target/extracted/dependencies/ ./
         COPY --from=builder /app/target/extracted/spring-boot-loader/ ./
