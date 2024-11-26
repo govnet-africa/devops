@@ -44,7 +44,7 @@ on:
         required: true
 jobs:
   docker_deploy:
-    runs-on: ubuntu-latest
+    runs-on: linux
     permissions: 
       id-token: write
       contents: read
