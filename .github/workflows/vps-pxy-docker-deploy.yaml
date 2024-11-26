@@ -69,9 +69,7 @@ jobs:
           key: ${{ secrets.ssh-private-key }}
       - name: Overwrite known hosts of ${{ inputs.deploy-host }}
         run: |
-          ssh-keyscan -p ${{inputs.jump-host-port}} ${{ inputs.jump-host-ip }} >> ~/.ssh/known_hosts
-          cat ~/.ssh/known_hosts
+          ssh-keyscan -p ${{inputs.jump-host-port}} ${{ inputs.jump-host-ip }} > ~/.ssh/known_hosts
           ssh jump-host "ssh-keyscan -p ${{inputs.deploy-host-port}} ${{ inputs.deploy-host-ip }}" >> ~/.ssh/known_hosts
-          cat ~/.ssh/known_hosts
       - name: Deploy ${{ inputs.service }} with docker
         run: ssh ${{ inputs.deploy-host }} "make -C ${{ inputs.docker-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
