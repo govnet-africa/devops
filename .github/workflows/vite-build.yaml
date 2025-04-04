@@ -41,6 +41,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: npm
           token: ${{ secrets.npm-token }}
+          cache-dependency-path: '**/package-lock.json' 
       - name: Authenticate ${{ github.repository_owner }} npm lib
         env: 
           NPM_TOKEN: ${{ secrets.npm-token }}

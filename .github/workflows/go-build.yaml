@@ -64,13 +64,14 @@ jobs:
       with:
         username: ${{ secrets.dockerhub-user }}
         password: ${{ secrets.dockerhub-token }} 
-    - run: cd ${{ inputs.working-dir }}  
     - name: Setup go ${{ inputs.go-version }}
       uses: actions/setup-go@v5
       with:
         token: ${{ inputs.git-token }}
         go-version: ${{ inputs.go-version }}
+        go-version-file: ${{ inputs.working-dir }}/go.mod
         cache: true   
+    - run: cd ${{ inputs.working-dir }}  
     - name: Download ${{ inputs.service }} dependencies
       run: go mod download
     - name: Build ${{ inputs.service }}
