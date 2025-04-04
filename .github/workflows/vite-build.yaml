@@ -28,13 +28,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - run: cd ${{ inputs.working-dir }} && pwd && ls -lah
       - name: Cache Build Output
         id: cache-npm-build
         uses: actions/cache@v4
         with:
           key: build-${{ github.sha }}
-          path: ./dist
+          path: ${{ inputs.working-dir }}/dist
       - uses: actions/setup-node@v4
         if: steps.cache-npm-build.outputs.cache-hit != 'true'
         with:
@@ -51,7 +50,7 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.npm-token }}" >> .npmrc
       - name: Download ${{ inputs.portal }} dependencies
         if: steps.cache-npm-build.outputs.cache-hit != 'true'
-        run: pwd && ls -lah && npm i
+        run: npm --prefix ${{ inputs.working-dir }} i
       - name: Build ${{ inputs.portal }} dependencies
         if: steps.cache-npm-build.outputs.cache-hit != 'true'
-        run: npm run build
+        run: npm run --prefix ${{ inputs.working-dir }} build
