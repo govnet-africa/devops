@@ -73,7 +73,7 @@ jobs:
         cache: true   
     - run: cd ${{ inputs.working-dir }} && pwd && ls -lah 
     - name: Download ${{ inputs.service }} dependencies
-      run: pwd && ls -lah && go mod download
+      run: go mod -C ${{ inputs.working-dir }} download
     - name: Build ${{ inputs.service }}
       run: |
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \

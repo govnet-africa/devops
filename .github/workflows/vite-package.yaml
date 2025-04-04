@@ -45,19 +45,19 @@ jobs:
         uses: actions/cache@v4
         with:
           key: package-${{ github.sha }}
-          path: ${{ env.ARTIFACT_DIR }}
+          path: ${{ inputs.working-dir }}/${{ env.ARTIFACT_DIR }}
       - name: Restore Build Cache
         id: npm-build-cache
         if: steps.npm-package-cache.outputs.cache-hit != 'true'
         uses: actions/cache/restore@v4
         with:
           key: build-${{ github.sha }}
-          path: ./dist
+          path: ${{ inputs.working-dir }}/dist
       - name: Prepare ${{ inputs.portal }} artifact output dir
         if: steps.npm-package-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p ${{ env.ARTIFACT_DIR }}
-          cp -r dist ${{ env.ARTIFACT_DIR }}
+          cp -r ${{ inputs.working-dir }}/dist ${{ env.ARTIFACT_DIR }}
       - name: Write config files
         if: steps.npm-package-cache.outputs.cache-hit != 'true'
         run: |
