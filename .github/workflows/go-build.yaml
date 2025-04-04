@@ -71,7 +71,6 @@ jobs:
         go-version: ${{ inputs.go-version }}
         go-version-file: ${{ inputs.working-dir }}/go.mod
         cache: true   
-    - run: cd ${{ inputs.working-dir }} && pwd && ls -lah 
     - name: Download ${{ inputs.service }} dependencies
       run: go mod -C ${{ inputs.working-dir }} download
     - name: Build ${{ inputs.service }}
