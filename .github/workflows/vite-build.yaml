@@ -13,6 +13,9 @@ on:
         required: false
         type: string
         default: ${{ vars.NODE_VERSION || 'v20.3.0' }}
+      working-dir:
+        type: string
+        default: ./
     secrets:
       npm-token:
         required: false
@@ -25,6 +28,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - run: cd ${{ inputs.working-dir }}  
       - name: Cache Build Output
         id: cache-npm-build
         uses: actions/cache@v4

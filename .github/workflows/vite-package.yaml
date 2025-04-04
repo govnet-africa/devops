@@ -20,6 +20,12 @@ on:
         required: false
         type: string
         default: ${{ vars.BUILD_ENV || 'develop' }}
+      working-dir:
+        type: string
+        default: ./
+      dockerhub-repo:
+        type: string
+        default: ${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
     secrets:
       dockerhub-user: 
         required: true
@@ -33,6 +39,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - run: cd ${{ inputs.working-dir }}  
       - name: Package Cache
         id: npm-package-cache
         uses: actions/cache@v4
@@ -93,7 +100,7 @@ jobs:
       - name: Build and push docker image
         uses: docker/build-push-action@v5
         env: 
-          DOCKERHUB_REPO: ${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
+          DOCKERHUB_REPO: ${{ inputs.dockerhub-repo }}
         with:
           context: ${{ env.ARTIFACT_DIR }}
           push: true
