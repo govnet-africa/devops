@@ -23,7 +23,7 @@ on:
         default: 80
       go-file:
         type: string
-        default: main.go
+        default: ./main.go
       working-dir:
         type: string
         default: ./
@@ -78,7 +78,7 @@ jobs:
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
           go build -C ${{ inputs.working-dir }} \
           -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ env.SERVICE_BUILD }} -X main.SHA=${{ github.sha }}" \
-          -o ${{ inputs.working-dir }}/${{ env.OUTPUT_BIN }} ${{ inputs.go-file }}
+          -o ${{ env.OUTPUT_BIN }} ${{ inputs.go-file }}
     - name: Write Dockerfile
       run: |
         cat <<EOF > ${{ inputs.working-dir }}/Dockerfile 
