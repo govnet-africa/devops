@@ -27,6 +27,9 @@ on:
       go-file:
         type: string
         default: ./main.go
+      dist-image:
+        type: string
+        default: scratch
     secrets:
       git-token:
         required: true
@@ -40,7 +43,7 @@ on:
         required: true
 jobs:
   build:
-    uses: govnet-africa/devops/.github/workflows/go-build.yaml@v4
+    uses: govnet-africa/devops/.github/workflows/go-build.yaml@v5
     with:
       service: ${{ inputs.service }}
       version: ${{ inputs.version }}
@@ -51,12 +54,13 @@ jobs:
       git-user: ${{ secrets.git-user }}
       dockerhub-token: ${{ secrets.docker-token }}
       dockerhub-user: ${{ secrets.dockerhub-user }}
+      dist-image: ${{ inputs.dist-image }}
     permissions:
       id-token: write
       contents: read
   deploy:
     needs: build
-    uses: govnet-africa/devops/.github/workflows/vps-docker-deploy.yaml@v4
+    uses: govnet-africa/devops/.github/workflows/vps-docker-deploy.yaml@v5
     with:
       service: ${{ inputs.service }}
       deploy-host: "${{ inputs.service }}.govnet"
