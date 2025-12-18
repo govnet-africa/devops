@@ -24,7 +24,7 @@ on:
       docker-host: 
         required: false
         type: string
-        default: ${{ vars.DOCKER_REGISTRY || 'docker.registry.io' }}
+        default: ${{ vars.DOCKER_REGISTRY || 'registry.docker.io' }}
     secrets:
       docker-user: 
         required: true
