@@ -32,9 +32,6 @@ jobs:
         machine: github.com
         username: ${{ secrets.git-user }}
         password: ${{ secrets.git-token }}    
-    - name: Configure git for private modules
-      run: |
-        git config --global url."https://${{ secrets.GOMOD_USER }}:${{ secrets.GOMOD_TOKEN }}@github.com/".insteadOf "https://github.com/"
     - name: Download dependencies
       run: go mod download
     - name: Run tests
