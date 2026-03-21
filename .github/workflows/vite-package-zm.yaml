@@ -1,0 +1,114 @@
+env:
+  ARTIFACT_DIR: .out/build/${{ inputs.environment }}
+  DOCKER_FILE: .out/build/${{ inputs.environment }}/Dockerfile
+  NGINX_CONF: .out/build/${{ inputs.environment }}/nginx.conf
+  ENV_FILE: .out/build/${{ inputs.environment }}/.env
+on:
+  workflow_call:
+    inputs:
+      version: 
+        required: false
+        type: string
+        default: 'develop'
+      portal: 
+        required: true
+        type: string
+      portal-port: 
+        required: false
+        type: string
+        default: ${{ vars.PORTAL_PORT || '80' }}
+      environment: 
+        required: false
+        type: string
+        default: ${{ vars.BUILD_ENV || 'develop' }}
+      docker-host: 
+        required: false
+        type: string
+        default: ${{ vars.DOCKER_REGISTRY || 'docker.io' }}
+    secrets:
+      docker-user: 
+        required: true
+      docker-token: 
+        required: true
+jobs:
+  vite:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package Cache
+        id: npm-package-cache
+        uses: actions/cache@v4
+        with:
+          key: package-${{ github.sha }}
+          path: ${{ env.ARTIFACT_DIR }}
+      - name: Restore Build Cache
+        id: npm-build-cache
+        if: steps.npm-package-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          key: build-${{ github.sha }}
+          path: ./dist
+      - name: Prepare ${{ inputs.portal }} artifact output dir
+        if: steps.npm-package-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ${{ env.ARTIFACT_DIR }}
+          cp -r dist ${{ env.ARTIFACT_DIR }}
+      - name: Write config files
+        if: steps.npm-package-cache.outputs.cache-hit != 'true'
+        run: |
+          cat <<EOF > ${{ env.NGINX_CONF }}
+          server {
+            listen ${{ inputs.portal-port }};
+            location / {
+              root   /usr/share/nginx/html;
+              index  index.html index.htm;
+              try_files $uri $uri/ /index.html;
+              add_header 'Access-Control-Allow-Origin' '*';
+              add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT';
+              add_header 'Access-Control-Allow-Headers' 'Version, Authorization, Content-Type'; 
+            }
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+              root   /usr/share/nginx/html;
+            }
+          }
+          EOF
+      - name: Write Dockerfile
+        if: steps.npm-package-cache.outputs.cache-hit != 'true'
+        run: |
+          cat <<EOF > ${{ env.DOCKER_FILE }} 
+          FROM nginx:stable-alpine
+          COPY dist/ /usr/share/nginx/html
+          COPY nginx.conf /etc/nginx/conf.d/default.conf
+          ENV VERSION=${{ github.sha }}
+          EXPOSE ${{ inputs.portal-port }}
+          CMD ["nginx", "-g", "daemon off;"]
+          EOF
+      - name: Write version env varibles
+        run: |
+          echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
+          echo "SERVICE_BUILD=`date -I`-`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
+          echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' '`" >> $GITHUB_ENV
+      - name: Set docker branch tag
+        run: |
+          echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
+      - name: Login to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.docker-host }}
+          username: ${{ secrets.docker-user }}
+          password: ${{ secrets.docker-token }}
+      - name: Build and push docker image
+        uses: docker/build-push-action@v5
+        env: 
+          DOCKER_REPO: ${{ inputs.docker-host }}/${{ vars.DOCKER_ORG }}/${{ vars.DOCKER_REPO_ZM }}
+        with:
+          context: ${{ env.ARTIFACT_DIR }}
+          push: true
+          tags: |
+            ${{ env.DOCKER_REPO }}:${{ inputs.version || 'develop' }}
+            ${{ env.DOCKER_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}
+            ${{ env.DOCKER_REPO }}:latest
