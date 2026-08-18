@@ -33,6 +33,10 @@ on:
         required: false
         type: string
         default: ''
+      docker-host: 
+        required: false
+        type: string
+        default: ${{ vars.DOCKER_REGISTRY || 'docker.io' }}
     secrets: 
       git-token:
         required: true
@@ -66,7 +70,8 @@ jobs:
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.dockerhub-user }}
-        password: ${{ secrets.dockerhub-token }} 
+        password: ${{ secrets.dockerhub-token }}
+        registry: ${{ inputs.docker-host }} 
     - name: Setup go ${{ inputs.go-version }}
       uses: actions/setup-go@v5
       with:
