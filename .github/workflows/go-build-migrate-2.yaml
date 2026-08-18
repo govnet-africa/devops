@@ -2,7 +2,6 @@
 env:
   GOPRIVATE: "github.com/govnet-africa"
   OUTPUT_BIN: ${{ inputs.service }}-bin
-  DOCKERHUB_REPO: ${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
   DOCKERFILE_BUILDER_IMG: alpine
 on:
   workflow_call:
@@ -107,6 +106,8 @@ jobs:
         EOF
     - name: Docker (build + push) ${{ inputs.service }} image to registry
       uses: docker/build-push-action@v5
+      env: 
+        DOCKERHUB_REPO: ${{ inputs.docker-host }}/${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
       with:
         context: .
         push: true
