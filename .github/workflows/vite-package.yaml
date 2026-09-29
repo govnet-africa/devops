@@ -111,4 +111,5 @@ jobs:
           tags: |
             ${{ env.DOCKER_REPO }}:${{ inputs.version || 'develop' }}
             ${{ env.DOCKER_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}
+            ${{ env.DOCKER_REPO }}:${{ github.sha }}
             ${{ env.DOCKER_REPO }}:latest
