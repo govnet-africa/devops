@@ -47,6 +47,10 @@ on:
         required: false
         type: string
         default: ${{ vars.DOCKER_REGISTRY || 'docker.io' }}
+      github-runner: 
+        required: false
+        type: string
+        default: ubuntu-latest
     secrets: 
       git-token:
         required: true
@@ -58,7 +62,7 @@ on:
         required: true
 jobs:
   go-build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.github-runner }}
     permissions:
       id-token: write
       contents: read

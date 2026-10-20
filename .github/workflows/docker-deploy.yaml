@@ -1,0 +1,65 @@
+name: Deploy to docker host
+  
+on: 
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      tag:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+      host-ip:
+        required: true
+        type: string
+      host-port:
+        required: false
+        type: number
+        default: 22
+      ssh-user:
+        required: false
+        type: string
+        default: 'github'
+      docker-compose-dir:
+        required: true
+        type: string
+      github-runner: 
+        required: false
+        type: string
+        default: ubuntu-latest
+    secrets:
+      ts-auth-key:
+        required: true
+      ssh-private-key:
+        required: true
+jobs:
+  docker-compose:
+    runs-on: ${{ inputs.github-runner }}
+    permissions: 
+      id-token: write
+      contents: read
+    env:
+      DEPLOY_HOST: "${{ inputs.service }}.service.govnet"
+    steps:
+      - name: Set short variables
+        run: |
+          echo "GITHUB_SHA_SHORT=`git rev-parse --short ${{ github.sha }}`" >> $GITHUB_ENV
+          echo "GITHUB_BRANCH_SHORT=`git branch --show-current | sed 's/\//_/g' | tr -d ' ' | cut -c 1-10`" >> $GITHUB_ENV
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.ssh-private-key }}
+          name: govnet_github
+          known_hosts: i-will-change-shortly
+          config: |
+            Host ${{ env.DEPLOY_HOST }}
+              Port ${{ inputs.host-port }}
+              HostName ${{ inputs.host-ip }}
+              User ${{ inputs.ssh-user }}
+              IdentityFile ~/.ssh/govnet_github
+      - name: Overwrite known hosts of ${{ env.DEPLOY_HOST }}
+        run: ssh-keyscan -p ${{ inputs.host-port }} ${{ inputs.host-ip }} > ~/.ssh/known_hosts
+      - name: Deploy ${{ inputs.service }} with docker compose
+        run: ssh ${{ env.DEPLOY_HOST }} "make -C ${{ inputs.docker-compose-dir }} deploy-service-tag service=${{ inputs.service }} tag=${{ inputs.tag }}"
