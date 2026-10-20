@@ -2,7 +2,6 @@
 env:
   GOPRIVATE: "github.com/govnet-*"
   OUTPUT_BIN: ${{ inputs.service }}-bin
-  DOCKERHUB_REPO: ${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
   DOCKERFILE_BUILDER_IMG: alpine
 on:
   workflow_call:
@@ -44,6 +43,10 @@ on:
         required: false
         type: string
         default: ''
+      docker-host: 
+        required: false
+        type: string
+        default: ${{ vars.DOCKER_REGISTRY || 'docker.io' }}
     secrets: 
       git-token:
         required: true
@@ -78,6 +81,7 @@ jobs:
       with:
         username: ${{ secrets.dockerhub-user }}
         password: ${{ secrets.dockerhub-token }} 
+        registry: ${{ inputs.docker-host }} 
     - name: prep directory for npm
       run: cp ${{ inputs.vue-dir }}/package*.json .
     - uses: actions/setup-node@v4
@@ -127,6 +131,8 @@ jobs:
         EOF
     - name: Docker publish ${{ inputs.service }} image to registry
       uses: docker/build-push-action@v5
+      env: 
+        DOCKERHUB_REPO: ${{ inputs.docker-host }}/${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
       with:
         context: .
         push: true
