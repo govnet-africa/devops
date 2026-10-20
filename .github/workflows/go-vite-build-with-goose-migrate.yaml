@@ -32,6 +32,9 @@ on:
       go-file:
         type: string
         default: ./main.go
+      gooose-version:
+        type: string
+        default: 3.24.1
       vue-dir:
         type: string
         default: web
@@ -115,7 +118,7 @@ jobs:
     - name: Write Dockerfile
       run: |
         cat <<EOF > Dockerfile 
-        FROM gomicro/goose:3.24.1 as gooze
+        FROM ${{ inputs.docker-host }}/gomicro/goose:${{ inputs.goose-version }} as gooze
         FROM ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
         WORKDIR /app
         COPY dist /app/dist
@@ -127,8 +130,6 @@ jobs:
         ENV WEB_PRODUCTION_MODE=true
         ENV GO_PRODUCTION_MODE=true
         ENV SKIP_HOUSEKEEPING=true
-        ENV GOOSE_DRIVER="postgres" 
-        ENV GOOSE_DBSTRING="user=${GOVNET_DB_USERNAME} password=${GOVNET_DB_PASSWORD} host=${GOVNET_DB_HOST} port=${GOVNET_DB_PORT} dbname=${GOVNET_DB_DATABASE} sslmode=disable" 
         ENV SOURCE=github.com/${{ github.repository }}@${{ env.GITHUB_SHA_SHORT }}
         EXPOSE ${{ inputs.service-port }}
         CMD ["/app/${{ env.OUTPUT_BIN }}"]
