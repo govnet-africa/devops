@@ -1,8 +1,6 @@
 
 env:
   GOPRIVATE: "github.com/govnet-*"
-  OUTPUT_BIN: ${{ inputs.service }}-bin
-  DOCKERFILE_BUILDER_IMG: alpine
 on:
   workflow_call:
     inputs:
@@ -54,6 +52,11 @@ on:
         required: false
         type: string
         default: ubuntu-latest
+      dockerfile-builder-img: 
+        required: false
+        type: string
+        default: alpine
+      
     secrets: 
       git-token:
         required: true
@@ -110,16 +113,21 @@ jobs:
     - name: Download ${{ inputs.service }} dependencies
       run: go mod download && go mod verify
     - name: Build ${{ inputs.service }}
+      env:
+        OUTPUT_BIN: ${{ inputs.service }}-bin
       run: |
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
           go build -a \
           -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ env.SERVICE_BUILD }} -X main.SHA=${{ github.sha }}" \
           -installsuffix cgo -o ${{ env.OUTPUT_BIN }} ${{ inputs.go-file }}
     - name: Write Dockerfile
+      env:
+        OUTPUT_BIN: ${{ inputs.service }}-bin
+        GOOSE_IMG: gomicro/goose:${{ inputs.goose-version }}
       run: |
         cat <<EOF > Dockerfile 
-        FROM ${{ inputs.docker-host }}/gomicro/goose:${{ inputs.goose-version }} as gooze
-        FROM ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
+        FROM ${{ inputs.docker-host }}${{ inputs.docker-host == 'docker.govnet.ug' && '/dockerhub' || '' }}/${{ env.GOOSE_IMG }} as gooze
+        FROM ${{ inputs.docker-host }}${{ inputs.docker-host == 'docker.govnet.ug' && '/dockerhub' || '' }}/${{ inpute.dockerfile-builder-img }} as builder
         WORKDIR /app
         COPY dist /app/dist
         COPY ${{ env.OUTPUT_BIN }} /app
@@ -143,7 +151,7 @@ jobs:
         org.opencontainers.image.authors=Govnet-Services-LTD
         org.opencontainers.image.url=https://das.eposta.ug
       env: 
-        DOCKERHUB_REPO: ${{ inputs.docker-host }}/${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
+        DOCKERHUB_REPO: ${{ inputs.docker-host }}/${{ vars.DOCKER_ORG }}/${{ vars.DOCKER_REPO }}
       with:
         context: .
         push: true
