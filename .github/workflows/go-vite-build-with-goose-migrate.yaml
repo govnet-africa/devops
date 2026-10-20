@@ -144,12 +144,6 @@ jobs:
         EOF
     - name: Docker publish ${{ inputs.service }} image to registry
       uses: docker/build-push-action@v6
-      labels: |
-        org.opencontainers.image.source=https://github.com/${{ github.repository }}
-        org.opencontainers.image.revision=${{ github.sha }}
-        org.opencontainers.image.version=${{ inputs.version }}
-        org.opencontainers.image.authors=Govnet-Services-LTD
-        org.opencontainers.image.url=https://das.eposta.ug
       env: 
         DOCKERHUB_REPO: ${{ inputs.docker-host }}/${{ vars.DOCKER_ORG }}/${{ vars.DOCKER_REPO }}
       with:
@@ -163,6 +157,12 @@ jobs:
           ${{ env.DOCKERHUB_REPO }}:${{ env.SERVICE_BUILD }}
           ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:latest
+        labels: |
+          org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.version=${{ inputs.version }}
+          org.opencontainers.image.authors=Govnet-Services-LTD
+          org.opencontainers.image.url=https://das.eposta.ug
     - name: Link to Deploy Workflow
       if:  success() && inputs.dispatch-workflow-url != ''
       env:
