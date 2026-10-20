@@ -84,24 +84,24 @@ jobs:
         registry: ${{ inputs.docker-host }} 
     - name: prep directory for npm
       run: cp ${{ inputs.vue-dir }}/package*.json .
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v5
       with:
         node-version: ${{ inputs.node-version }}
         cache: npm
     - name: Download ${{ inputs.service }} npm dependencies
-      run: ls -lah && cd ./${{ inputs.vue-dir }} && npm i && cd ..
+      run: ls -lah && cd ./${{ inputs.vue-dir }} && npm ci && cd ..
     - name: Build ${{ inputs.service }} npm dependencies
       run: cd ./${{ inputs.vue-dir }} && npm run build && mv dist .. && cd .. && ls -lah
     - name: Show dist
       run: ls -lah dist
     - name: Setup go ${{ inputs.go-version }}
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         token: ${{ inputs.git-token }}
         go-version: ${{ inputs.go-version }}
         cache: true   
     - name: Download ${{ inputs.service }} dependencies
-      run: go mod download
+      run: go mod download && go mod verify
     - name: Build ${{ inputs.service }}
       run: |
         CGO_ENABLED=0 GO111MODULE=on GOOS=linux \
@@ -130,7 +130,13 @@ jobs:
         CMD ["/app/${{ env.OUTPUT_BIN }}"]
         EOF
     - name: Docker publish ${{ inputs.service }} image to registry
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
+      labels: |
+        org.opencontainers.image.source=https://github.com/${{ github.repository }}
+        org.opencontainers.image.revision=${{ github.sha }}
+        org.opencontainers.image.version=${{ inputs.version }}
+        org.opencontainers.image.authors=Govnet-Services-LTD
+        org.opencontainers.image.url=https://das.eposta.ug
       env: 
         DOCKERHUB_REPO: ${{ inputs.docker-host }}/${{ vars.DOCKERHUB_ORG }}/${{ vars.DOCKERHUB_REPO }}
       with:
