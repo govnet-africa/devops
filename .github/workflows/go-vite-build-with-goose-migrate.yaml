@@ -30,7 +30,7 @@ on:
       go-file:
         type: string
         default: ./main.go
-      gooose-version:
+      goose-version:
         type: string
         default: 3.24.1
       vue-dir:
