@@ -150,13 +150,18 @@ jobs:
       with:
         context: .
         push: true
+        # tags: |
+        #   ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
+        #   ${{ env.DOCKERHUB_REPO }}:${{ inputs.version }}
+        #   # ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }} 
+        #   # ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}-${{ env.GITHUB_SHA_SHORT }}
+        #   ${{ env.DOCKERHUB_REPO }}:${{ env.BUILD_DATE }}
+        #   # ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_SHA_SHORT }}
+        #   ${{ env.DOCKERHUB_REPO }}:latest
         tags: |
           ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}
           ${{ env.DOCKERHUB_REPO }}:${{ inputs.version }}
-          # ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }} 
-          # ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_BRANCH_SHORT }}-${{ env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:${{ env.BUILD_DATE }}
-          # ${{ env.DOCKERHUB_REPO }}:${{ env.GITHUB_SHA_SHORT }}
           ${{ env.DOCKERHUB_REPO }}:latest
         labels: |
           org.opencontainers.image.source=https://github.com/${{ github.repository }}
