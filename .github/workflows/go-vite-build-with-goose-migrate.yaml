@@ -127,7 +127,7 @@ jobs:
       run: |
         cat <<EOF > Dockerfile 
         FROM ${{ inputs.docker-host }}${{ inputs.docker-host == 'docker.govnet.ug' && '/dockerhub' || '' }}/${{ env.GOOSE_IMG }} as gooze
-        FROM ${{ inputs.docker-host }}${{ inputs.docker-host == 'docker.govnet.ug' && '/dockerhub' || '' }}/${{ inpute.dockerfile-builder-img }} as builder
+        FROM ${{ inputs.docker-host }}${{ inputs.docker-host == 'docker.govnet.ug' && '/dockerhub' || '' }}/${{ inputs.dockerfile-builder-img }} as builder
         WORKDIR /app
         COPY dist /app/dist
         COPY ${{ env.OUTPUT_BIN }} /app
