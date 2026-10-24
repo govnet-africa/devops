@@ -3,6 +3,11 @@ on:
   push:
   workflow_dispatch: 
   workflow_call:
+    inputs:
+      go-version:
+        required: false
+        type: string
+        default: '1.27'
     secrets: 
       git-token:
         required: true
@@ -36,7 +41,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ vars.GO_VERSION || 1.22  }}
+          go-version: ${{ inputs.go-version }}
           token: ${{ secrets.git-token }}
           cache: true
       - name: Restore Go Dependencies
