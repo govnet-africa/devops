@@ -4,10 +4,10 @@ env:
 on: 
   workflow_call:
     inputs:
-      version:
+      go-version:
         required: false
         type: string
-        default: '1.22.0'
+        default: '1.27'
     secrets: 
       git-token:
         required: true
