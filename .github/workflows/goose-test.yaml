@@ -21,7 +21,7 @@ jobs:
       contents: read
     services:
       postgres:
-        image: postgres:${{ vars.GOOSE_POSTGRES_VERSION || 16 }}
+        image: postgres:${{ vars.GOOSE_POSTGRES_VERSION || 18 }}
         env:
           POSTGRES_USER: ${{ vars.GOOSE_DB_USERNAME || 'govnet' }}
           POSTGRES_PASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
@@ -29,12 +29,12 @@ jobs:
         ports:
           - ${{ vars.GOOSE_DB_PORT || 5432 }}:5432
     env:
-      GOVNET_DB_HOST: ${{ vars.GOOSE_DB_HOST || '127.0.0.1' }}
-      GOVNET_DB_DRIVER: ${{ vars.GOOSE_DB_DRIVER || 'postgres' }}
-      GOVNET_DB_DATABASE: ${{ vars.GOOSE_DB_NAME || 'govnet' }}
-      GOVNET_DB_USERNAME: ${{ vars.GOOSE_DB_USERNAME || 'govnet' }}
-      GOVNET_DB_PASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
-      GOVNET_DB_PORT: ${{ vars.GOOSE_DB_PORT || 5432 }}
+      POSTGRES_DB_HOST: ${{ vars.GOOSE_DB_HOST || '127.0.0.1' }}
+      POSTGRES_DB_DRIVER: ${{ vars.GOOSE_DB_DRIVER || 'postgres' }}
+      POSTGRES_DB_DATABASE: ${{ vars.GOOSE_DB_NAME || 'govnet' }}
+      POSTGRES_DB_USERNAME: ${{ vars.GOOSE_DB_USERNAME || 'govnet' }}
+      POSTGRES_DB_PASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
+      POSTGRES_DB_PORT: ${{ vars.GOOSE_DB_PORT || 5432 }}
       PGPASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
       GO_CACHE_KEY: go-home-goose-${{ vars.GO_VERSION || 1.22 }}
       GO_CACHE_DIR: /home/runner/go/
@@ -61,9 +61,9 @@ jobs:
         run: |
           go install github.com/pressly/goose/v3/cmd/goose@latest
           goose -version
-      - uses: sqlc-dev/setup-sqlc@v4
+      - uses: sqlc-dev/setup-sqlc@v5
         with:
-          sqlc-version: ${{ vars.SQLC_VERSION || '1.25.0'  }}
+          sqlc-version: ${{ vars.SQLC_VERSION || '1.28.0'  }}
       - uses: actions/checkout@v4
       - run: sqlc generate
       - run: go test ./...
@@ -75,7 +75,7 @@ jobs:
           path: ${{ env.GO_CACHE_DIR }}
       - name: Install Postgres Extensions
         run: |
-          echo 'create extension if not exists "uuid-ossp"' | psql -h ${{ env.GOVNET_DB_HOST }} -U ${{ env.GOVNET_DB_USERNAME }} -d ${{ env.GOVNET_DB_DATABASE }}
-          echo 'create extension if not exists "moddatetime"' | psql -h ${{ env.GOVNET_DB_HOST }} -U ${{ env.GOVNET_DB_USERNAME }} -d ${{ env.GOVNET_DB_DATABASE }}
+          echo 'create extension if not exists "uuid-ossp"' | psql -h ${{ env.POSTGRES_DB_HOST }} -U ${{ env.POSTGRES_DB_USERNAME }} -d ${{ env.POSTGRES_DB_DATABASE }}
+          echo 'create extension if not exists "moddatetime"' | psql -h ${{ env.POSTGRES_DB_HOST }} -U ${{ env.POSTGRES_DB_USERNAME }} -d ${{ env.POSTGRES_DB_DATABASE }}
       - run: make migrate-up
       - run: make migrate-reset
