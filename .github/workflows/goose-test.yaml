@@ -1,81 +1,124 @@
-name: Goose (Tests)
+name: Goose Test
+
 on:
-  push:
-  workflow_dispatch: 
   workflow_call:
     inputs:
-      go-version:
+      goose-migrations-path:
+        description: Path containing goose migrations
+        required: true
+        type: string
+
+      goose-version-table:
+        description: Goose version table
         required: false
         type: string
-        default: '1.27'
-    secrets: 
-      git-token:
-        required: true
-      git-user:
-        required: true
+        default: goose_db_version
+
+      postgres-image:
+        description: PostgreSQL image
+        required: false
+        type: string
+        default: postgres:18
+
+      postgres-extensions:
+        description: Extensions to install, one per line
+        required: false
+        type: string
+        default: ""
+
+      db-driver:
+        description: Goose driver
+        required: false
+        type: string
+        default: postgres
+
+      go-version:
+        description: Go version
+        required: false
+        type: string
+        default: "1.25"
+
 jobs:
   goose-test:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
+
     services:
       postgres:
-        image: postgres:${{ vars.GOOSE_POSTGRES_VERSION || 18 }}
+        image: ${{ inputs.postgres-image }}
         env:
-          POSTGRES_USER: ${{ vars.GOOSE_DB_USERNAME || 'govnet' }}
-          POSTGRES_PASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
-          POSTGRES_DB: ${{ vars.GOOSE_DB_NAME || 'govnet' }}
+          POSTGRES_DB: govnet
+          POSTGRES_USER: govnet
+          POSTGRES_PASSWORD: govnet
         ports:
-          - ${{ vars.GOOSE_DB_PORT || 5432 }}:5432
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U govnet"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+          
     env:
-      POSTGRES_DB_HOST: ${{ vars.GOOSE_DB_HOST || '127.0.0.1' }}
-      POSTGRES_DB_DRIVER: ${{ vars.GOOSE_DB_DRIVER || 'postgres' }}
-      POSTGRES_DB_DATABASE: ${{ vars.GOOSE_DB_NAME || 'govnet' }}
-      POSTGRES_DB_USERNAME: ${{ vars.GOOSE_DB_USERNAME || 'govnet' }}
-      POSTGRES_DB_PASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
-      POSTGRES_DB_PORT: ${{ vars.GOOSE_DB_PORT || 5432 }}
-      PGPASSWORD: ${{ vars.GOOSE_DB_PASSWORD || 'govnet' }}
-      GO_CACHE_KEY: go-home-goose-${{ vars.GO_VERSION || 1.22 }}
-      GO_CACHE_DIR: /home/runner/go/
+      DB_DRIVER: ${{ inputs.db-driver }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: govnet
+      DB_USERNAME: govnet
+      DB_PASSWORD: govnet
+
     steps:
-      - uses: actions/setup-go@v5
+      - name: Checkout
+        uses: actions/checkout@v5
+        
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ inputs.go-version }}
-          token: ${{ secrets.git-token }}
           cache: true
-      - name: Restore Go Dependencies
-        id: restore-go-mod
-        uses: actions/cache/restore@v4
-        with:
-          key: ${{env.GO_CACHE_KEY }}
-          path: ${{ env.GO_CACHE_DIR }}
-      
-      - name: Configure Netrc
-        uses: extractions/netrc@v2
-        with:
-          machine: github.com
-          username: ${{ secrets.git-user }}
-          password: ${{ secrets.git-token }}    
-      - if: steps.restore-go-mod.outputs.cache-hit != 'true'
+
+      - name: Install Goose
         run: |
           go install github.com/pressly/goose/v3/cmd/goose@latest
-          goose -version
-      - uses: sqlc-dev/setup-sqlc@v5
-        with:
-          sqlc-version: ${{ vars.SQLC_VERSION || '1.28.0'  }}
-      - uses: actions/checkout@v4
-      - run: sqlc generate
-      - run: go test ./...
-      - name: Save Go Dependencies
-        uses: actions/cache/save@v4
-        if: steps.restore-go-mod.outputs.cache-hit != 'true'
-        with:
-          key: ${{ env.GO_CACHE_KEY }}
-          path: ${{ env.GO_CACHE_DIR }}
-      - name: Install Postgres Extensions
+
+      - name: Wait for PostgreSQL
         run: |
-          echo 'create extension if not exists "uuid-ossp"' | psql -h ${{ env.POSTGRES_DB_HOST }} -U ${{ env.POSTGRES_DB_USERNAME }} -d ${{ env.POSTGRES_DB_DATABASE }}
-          echo 'create extension if not exists "moddatetime"' | psql -h ${{ env.POSTGRES_DB_HOST }} -U ${{ env.POSTGRES_DB_USERNAME }} -d ${{ env.POSTGRES_DB_DATABASE }}
-      - run: make migrate-up
-      - run: make migrate-reset
+          until pg_isready \
+            -h "$DB_HOST" \
+            -p "$DB_PORT" \
+            -U "$DB_USERNAME"
+          do
+            sleep 2
+          done
+
+      - name: Install PostgreSQL Extensions
+        if: inputs.postgres-extensions != ''
+        env:
+          POSTGRES_EXTENSIONS: ${{ inputs.postgres-extensions }}
+        run: |
+          IFS=',' read -ra EXTENSIONS <<< "$POSTGRES_EXTENSIONS"
+          for EXTENSION in "${EXTENSIONS[@]}"; do
+            [ -z "$EXTENSION" ] && continue
+            psql \
+              -h "$DB_HOST" \
+              -U "$DB_USERNAME" \
+              -d "$DB_DATABASE" \
+              -c "CREATE EXTENSION IF NOT EXISTS \"$EXTENSION\";"
+          done
+
+      - name: Configure Goose
+        run: |
+          echo "GOOSE_DRIVER=${DB_DRIVER}" >> $GITHUB_ENV
+          echo "GOOSE_DBSTRING=host=${DB_HOST} user=${DB_USERNAME} password=${DB_PASSWORD} dbname=${DB_DATABASE} port=${DB_PORT} sslmode=disable" >> $GITHUB_ENV
+
+      - name: Run Migrations
+        run: |
+          goose \
+            -table "${{ inputs.goose-version-table }}" \
+            -dir "${{ inputs.goose-migrations-path }}" \
+            up
+
+      - name: Migration Status
+        run: |
+          goose \
+            -table "${{ inputs.goose-version-table }}" \
+            -dir "${{ inputs.goose-migrations-path }}" \
+            status
