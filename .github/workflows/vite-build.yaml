@@ -13,12 +13,16 @@ on:
         required: false
         type: string
         default: ${{ vars.NODE_VERSION || 'v20.3.0' }}
+      github-runner: 
+        required: false
+        type: string
+        default: ubuntu-latest
     secrets:
       npm-token:
         required: false
 jobs:
   vite:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.github-runner }}
     # needs: install
     permissions: 
       id-token: write

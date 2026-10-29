@@ -33,6 +33,21 @@ on:
         required: false
         type: string
         default: 'README.md'
+      docker-host: 
+        required: false
+        type: string
+        default: ${{ vars.DOCKER_REGISTRY || 'docker.io' }}
+      goose-version:
+        type: string
+        default: 3.24.1
+      github-runner: 
+        required: false
+        type: string
+        default: ubuntu-latest
+      dockerfile-builder-img: 
+        required: false
+        type: string
+        default: alpine
     secrets: 
       git-token:
         required: true
@@ -44,7 +59,7 @@ on:
         required: true
 jobs:
   go-build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.github-runner }}
     permissions:
       id-token: write
       contents: read
@@ -82,11 +97,14 @@ jobs:
           -ldflags "-s -w -X main.Release=${{ inputs.service }}-${{ env.SERVICE_BUILD }} -X main.SHA=${{ github.sha }}" \
           -o ${{ env.OUTPUT_BIN }} ${{ inputs.go-file }}
     - name: Write Dockerfile
+      env:
+        OUTPUT_BIN: ${{ inputs.service }}-bin
+        GOOSE_IMG: gomicro/goose:${{ inputs.goose-version }}
       run: |
         cat <<EOF > Dockerfile 
-        FROM ${{ env.DOCKERFILE_BUILDER_IMG }} as builder
-        FROM gomicro/goose:3.24.1 as gooze
-        FROM alpine
+        FROM ${{ inputs.docker-host }}${{ inputs.docker-host == 'docker.govnet.ug' && '/dockerhub' || '' }}/${{ env.GOOSE_IMG }} as gooze
+        FROM ${{ inputs.docker-host }}${{ inputs.docker-host == 'docker.govnet.ug' && '/dockerhub' || '' }}/${{ inputs.dockerfile-builder-img }} as builder
+        FROM ${{ inputs.docker-host }}${{ inputs.docker-host == 'docker.govnet.ug' && '/dockerhub' || '' }}/alpine
         RUN apk add --no-cache openjdk17-jre ca-certificates tzdata
         WORKDIR /
         COPY ${{ env.OUTPUT_BIN }} .
